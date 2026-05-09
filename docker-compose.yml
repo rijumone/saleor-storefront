@@ -6,12 +6,13 @@ services:
       args:
         NEXT_PUBLIC_SALEOR_API_URL: ${NEXT_PUBLIC_SALEOR_API_URL}
         NEXT_PUBLIC_STOREFRONT_URL: ${NEXT_PUBLIC_STOREFRONT_URL}
+        NEXT_PUBLIC_DEFAULT_CHANNEL: ${NEXT_PUBLIC_DEFAULT_CHANNEL}
     restart: unless-stopped
     env_file:
       - .env
     ports:
       # - 3000:3000
-      - ${PORT:-3000}:3000
+      - ${PORT:-4297}:4297
     networks:
       - saleor_network
 
