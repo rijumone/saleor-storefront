@@ -235,11 +235,117 @@ export const PaymentStep: FC<PaymentStepProps> = ({
 				}
 
 				// Process payment using available gateway
-				if (hasDummyGateway) {
+				if (paymentMethod === "razorpay") {
+					// 1. Call Next.js API to create Razorpay Order
+					const response = await fetch("/api/razorpay", {
+						method: "POST",
+						headers: { "Content-Type": "application/json" },
+						body: JSON.stringify({
+							amount: checkout.totalPrice?.gross?.amount || 0,
+							currency: checkout.totalPrice?.gross?.currency || "INR",
+							receipt: checkout.id.substring(0, 40),
+						}),
+					});
+
+					const order: any = await response.json();
+					if (!response.ok) {
+						setErrors({ payment: order.error || "Failed to create Razorpay order" });
+						return;
+					}
+
+					// 2. Load Razorpay script
+					const scriptLoaded = await new Promise((resolve) => {
+						const script = document.createElement("script");
+						script.src = "https://checkout.razorpay.com/v1/checkout.js";
+						script.onload = () => resolve(true);
+						script.onerror = () => resolve(false);
+						document.body.appendChild(script);
+					});
+
+					if (!scriptLoaded) {
+						setErrors({ payment: "Failed to load Razorpay SDK" });
+						return;
+					}
+
+					// 3. Open Razorpay widget
+					const options = {
+						key: order.key_id,
+						amount: order.amount,
+						currency: order.currency,
+						name: "Rijuvenation",
+						description: "Order Checkout",
+						order_id: order.id,
+						handler: async function (_paymentResponse: any) {
+							// On success, complete Saleor checkout
+							try {
+								setIsProcessing(true);
+								if (hasDummyGateway) {
+									const initResult = await transactionInitialize({
+										checkoutId: checkout.id,
+										action: "CHARGE" as any,
+										amount: checkout.totalPrice?.gross?.amount,
+										paymentGateway: {
+											id: dummyGatewayId,
+											data: {
+												event: { includePspReference: true, type: "CHARGE_SUCCESS" },
+											},
+										},
+									});
+
+									if (initResult.error || initResult.data?.transactionInitialize?.errors?.length) {
+										const errors = initResult.data?.transactionInitialize?.errors;
+										const errorMessage = errors?.length
+											? errors.map((e) => `${e.field}: ${e.message} (${e.code})`).join(", ")
+											: initResult.error?.message || "Unknown error";
+										console.error("Saleor transaction init failed:", initResult.error, errors);
+										throw new Error(`Saleor transaction init failed: ${errorMessage}`);
+									}
+								}
+
+								const completeResult = await checkoutComplete({ checkoutId: checkout.id });
+								if (completeResult.error || completeResult.data?.checkoutComplete?.errors?.length) {
+									throw new Error(
+										completeResult.data?.checkoutComplete?.errors?.[0]?.message ||
+											"Saleor checkout complete failed",
+									);
+								}
+
+								const saleorOrder = completeResult.data?.checkoutComplete?.order;
+								if (saleorOrder) {
+									const newQuery = createQueryString(searchParams, { orderId: saleorOrder.id });
+									router.replace(`?${newQuery}`, { scroll: false });
+								} else {
+									onComplete();
+								}
+							} catch (err: any) {
+								setErrors({ payment: err.message || "Failed to complete order in Saleor" });
+							} finally {
+								setIsProcessing(false);
+							}
+						},
+						prefill: {
+							name: billingData.formData.firstName + " " + billingData.formData.lastName,
+							email: user?.email || checkout.email,
+							contact: billingData.formData.phone,
+						},
+						theme: {
+							color: "#000000",
+						},
+					};
+
+					const paymentObject = new (window as any).Razorpay(options);
+					paymentObject.on("payment.failed", function (failResponse: any) {
+						setErrors({ payment: failResponse.error.description });
+					});
+					paymentObject.open();
+					return;
+				} else if (hasDummyGateway) {
 					const checkoutId = checkout.id;
 
 					const initResult = await transactionInitialize({
 						checkoutId,
+						action: "CHARGE" as any,
+						amount: checkout.totalPrice?.gross?.amount,
 						paymentGateway: {
 							id: dummyGatewayId,
 							data: {
@@ -253,14 +359,17 @@ export const PaymentStep: FC<PaymentStepProps> = ({
 
 					if (initResult.error) {
 						console.error("Payment initialization error:", initResult.error);
-						setErrors({ streetAddress1: "Payment failed. Please try again." });
+						setErrors({ payment: `Payment initialization error: ${initResult.error.message}` });
 						return;
 					}
 
 					const transactionErrors = initResult.data?.transactionInitialize?.errors;
 					if (transactionErrors?.length) {
+						const errorMessage = transactionErrors
+							.map((e) => `${e.field}: ${e.message} (${e.code})`)
+							.join(", ");
 						console.error("Transaction errors:", transactionErrors);
-						setErrors({ streetAddress1: transactionErrors[0].message || "Payment failed" });
+						setErrors({ payment: `Payment failed: ${errorMessage}` });
 						return;
 					}
 
@@ -311,6 +420,9 @@ export const PaymentStep: FC<PaymentStepProps> = ({
 				}
 
 				onComplete();
+			} catch (err: any) {
+				console.error("Unhandled error in payment submission:", err);
+				setErrors({ payment: err.message || "An unexpected error occurred. Please try again." });
 			} finally {
 				setIsProcessing(false);
 			}
@@ -346,7 +458,7 @@ export const PaymentStep: FC<PaymentStepProps> = ({
 
 	const isDisabled =
 		isLoading ||
-		(!hasDummyGateway && !hasRealGateway) ||
+		(paymentMethod !== "razorpay" && !hasDummyGateway && !hasRealGateway) ||
 		(paymentMethod === "card" && !hasDummyGateway && !isCardValid);
 
 	return (
@@ -355,7 +467,7 @@ export const PaymentStep: FC<PaymentStepProps> = ({
 			<CheckoutSummaryContext checkout={checkout} rows={summaryRows} onGoToStep={handleGoToStep} />
 
 			{/* No Payment Gateway Warning */}
-			{!hasDummyGateway && !hasRealGateway && (
+			{paymentMethod !== "razorpay" && !hasDummyGateway && !hasRealGateway && (
 				<div className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4">
 					<AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
 					<div>
@@ -369,7 +481,7 @@ export const PaymentStep: FC<PaymentStepProps> = ({
 			)}
 
 			{/* Test Mode Indicator */}
-			{hasDummyGateway && !hasRealGateway && (
+			{paymentMethod !== "razorpay" && hasDummyGateway && !hasRealGateway && (
 				<div className="flex items-start gap-3 rounded-lg border border-blue-200 bg-blue-50 p-4">
 					<AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-blue-600" />
 					<div>

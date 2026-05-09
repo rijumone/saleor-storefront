@@ -431,7 +431,7 @@ export const InformationStep: FC<InformationStepProps> = ({ checkout, onNext }) 
 
 	return (
 		<form className="space-y-8" onSubmit={handleSubmit} noValidate>
-			<ExpressCheckout />
+			{/* <ExpressCheckout /> */}
 
 			<ContactSection
 				isSignedIn={authenticated}

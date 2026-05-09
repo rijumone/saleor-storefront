@@ -362,7 +362,7 @@ export const OrderSummary: FC<OrderSummaryProps> = ({ checkout, order, editable 
 						<div className="flex flex-col items-center rounded-lg bg-secondary p-2.5 text-center">
 							<RotateCcw className="mb-1 h-4 w-4 text-muted-foreground" />
 							<span className="text-[10px] leading-tight text-muted-foreground">
-								30-day
+								15-day
 								<br />
 								returns
 							</span>

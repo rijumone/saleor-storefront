@@ -357,11 +357,12 @@ export function CartDrawer({ checkoutId, lines, totalPrice, channel }: CartDrawe
 						<div className="flex items-center justify-center gap-6 border-t border-border px-6 pb-4 pt-4 text-xs text-muted-foreground">
 							<span className="flex items-center gap-1.5">
 								<Truck className="h-4 w-4" />
-								Free delivery over {formatMoney(freeShippingThreshold, currency)}
+								{/* Free delivery over {formatMoney(freeShippingThreshold, currency)} */}
+								Free delivery
 							</span>
 							<span className="flex items-center gap-1.5">
 								<RotateCcw className="h-4 w-4" />
-								30-day returns
+								15-day returns
 							</span>
 						</div>
 					</div>

@@ -82,7 +82,8 @@ export function AddToCart({
 						<path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
 						<path d="M9 22V12h6v10" />
 					</svg>
-					Free delivery over €100
+					{/* Free delivery over €100 */}
+					Free delivery
 				</span>
 			</div>
 		</div>

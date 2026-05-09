@@ -5,7 +5,7 @@ import { CreditCard, Lock } from "lucide-react";
 import { Input } from "@/ui/components/ui/input";
 import { cn } from "@/lib/utils";
 
-export type PaymentMethodType = "card" | "paypal" | "ideal";
+export type PaymentMethodType = "card" | "paypal" | "ideal" | "razorpay";
 
 export interface CardData {
 	cardNumber: string;
@@ -55,7 +55,12 @@ export const PaymentMethodSelector: FC<PaymentMethodSelectorProps> = ({
 	onChange,
 	cardData,
 	onCardDataChange,
-	availableMethods = ["card", "paypal", "ideal"],
+	availableMethods = [
+		// "card",
+		"razorpay",
+		// "paypal",
+		// "ideal",
+	],
 }) => {
 	// Local card state if not controlled
 	const [localCardData, setLocalCardData] = useState<CardData>({
@@ -207,6 +212,27 @@ export const PaymentMethodSelector: FC<PaymentMethodSelectorProps> = ({
 							iDEAL
 						</div>
 						<span className="font-medium">iDEAL</span>
+					</label>
+				)}
+				{/* Razorpay */}
+				{availableMethods.includes("razorpay") && (
+					<label
+						className={cn(
+							"flex cursor-pointer items-center gap-4 rounded-lg border p-4 transition-colors",
+							"focus-within:ring-2 focus-within:ring-foreground focus-within:ring-offset-2",
+							value === "razorpay" ? "border-foreground" : "border-border",
+						)}
+					>
+						<input
+							type="radio"
+							name="payment"
+							value="razorpay"
+							checked={value === "razorpay"}
+							onChange={() => onChange("razorpay")}
+							className="sr-only"
+						/>
+						<RadioIndicator selected={value === "razorpay"} />
+						<span className="font-bold text-blue-600">Razorpay</span>
 					</label>
 				)}
 			</div>
