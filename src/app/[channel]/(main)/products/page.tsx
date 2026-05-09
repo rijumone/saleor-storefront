@@ -9,8 +9,8 @@ import { resolveCategorySlugsToIds } from "@/ui/components/plp/filter-utils.serv
 import { ProductsPageClient } from "./products-client";
 
 export const metadata = {
-	title: "Products · Saleor Storefront example",
-	description: "All products in Saleor Storefront example",
+	title: "Products · Rijuvenation",
+	description: "All products in Rijuvenation",
 };
 
 type PageProps = {

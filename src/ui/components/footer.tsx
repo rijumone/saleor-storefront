@@ -70,7 +70,11 @@ export async function Footer({ channel }: { channel: string }) {
 							<Logo className="h-7 w-auto" inverted />
 						</Link>
 						<p className="mt-4 max-w-xs text-sm leading-relaxed text-neutral-400">
-							Minimal design, maximum impact. Thoughtfully crafted essentials for everyday comfort.
+							{/* Minimal design, maximum impact. Thoughtfully crafted essentials for everyday comfort. */}
+							{/* "You're here because you know something. What you know you can't explain, but you feel it. You've felt it your entire life." <em>- Morpheus, The Matrix</em> */}
+							You&apos;re here because you know something. What you know you can&apos;t explain, but you feel
+							it. You&apos;ve felt it your entire life.
+							{/* You're here because you know something. What you know you can't explain, but you feel it. You've felt it your entire life. That there's something wrong with the world, you don't know what it is, but it's there. */}
 						</p>
 					</div>
 
