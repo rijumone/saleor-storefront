@@ -255,6 +255,10 @@ export const PaymentStep: FC<PaymentStepProps> = ({
 
 					// 2. Load Razorpay script
 					const scriptLoaded = await new Promise((resolve) => {
+						if ((window as any).Razorpay) {
+							resolve(true);
+							return;
+						}
 						const script = document.createElement("script");
 						script.src = "https://checkout.razorpay.com/v1/checkout.js";
 						script.onload = () => resolve(true);
@@ -434,6 +438,11 @@ export const PaymentStep: FC<PaymentStepProps> = ({
 			user?.addresses,
 			shippingAddress,
 			checkout.id,
+			checkout.totalPrice?.gross?.amount,
+			checkout.totalPrice?.gross?.currency,
+			checkout.email,
+			user?.email,
+			paymentMethod,
 			hasDummyGateway,
 			hasRealGateway,
 			updateBillingAddress,
