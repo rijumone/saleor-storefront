@@ -17,6 +17,15 @@ export default function RootLayout(props: { children: ReactNode }) {
 
 	return (
 		<html lang={localeConfig.htmlLang} className={`${GeistSans.variable} ${GeistMono.variable} min-h-dvh`}>
+			<head>
+				{process.env.UMAMI_TRACKING && (
+					<script
+						defer
+						src="https://umami.riju.tech/script.js"
+						data-website-id={process.env.UMAMI_TRACKING}
+					></script>
+				)}
+			</head>
 			<body className="min-h-dvh font-sans">
 				{children}
 				<SpeedInsights />
