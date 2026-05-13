@@ -176,16 +176,19 @@ export const AddressFields: FC<AddressFieldsProps> = ({
 				<div key={field} className="space-y-1.5">
 					{fieldLabel}
 					<FormSelect
+						key={fieldId}
 						id={fieldId}
 						value={formData[field] || ""}
 						onChange={(value) => onFieldChange(field, value)}
 						error={error}
 						placeholder={`Select ${label.toLowerCase()}`}
 						autoComplete={autoComplete}
-						options={countryAreaChoices.map(({ raw, verbose }) => ({
-							value: raw as string,
-							label: verbose as string,
-						}))}
+						options={countryAreaChoices
+							.map(({ raw, verbose }) => ({
+								value: raw as string,
+								label: verbose as string,
+							}))
+							.filter((option, index, array) => array.findIndex((o) => o.value === option.value) === index)}
 					/>
 					<FieldError error={error} />
 				</div>
