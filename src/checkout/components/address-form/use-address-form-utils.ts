@@ -44,7 +44,8 @@ export type LocalizedAddressFieldLabel =
 	| "zip"
 	| "postal"
 	| "postTown"
-	| "prefecture";
+	| "prefecture"
+	| "pin";
 export const localizedAddressFieldMessages: Record<LocalizedAddressFieldLabel, string> = {
 	province: "Province",
 	district: "District",
@@ -53,6 +54,7 @@ export const localizedAddressFieldMessages: Record<LocalizedAddressFieldLabel, s
 	postal: "Postal code",
 	postTown: "Post town",
 	prefecture: "Prefecture",
+	pin: "PIN code",
 };
 
 export const useAddressFormUtils = (countryCode: CountryCode = defaultCountry) => {
