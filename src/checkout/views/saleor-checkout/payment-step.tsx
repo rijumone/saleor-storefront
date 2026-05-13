@@ -146,6 +146,7 @@ export const PaymentStep: FC<PaymentStepProps> = ({
 
 	const total = checkout.totalPrice?.gross;
 	const totalStr = formatMoneyWithFallback(total);
+	const isFreeOrder = total?.amount === 0;
 
 	const handleSubmit = useCallback(
 		async (event?: React.FormEvent) => {
@@ -235,7 +236,23 @@ export const PaymentStep: FC<PaymentStepProps> = ({
 				}
 
 				// Process payment using available gateway
-				if (paymentMethod === "razorpay") {
+				if (isFreeOrder) {
+					// Free order, no payment gateway needed
+					const completeResult = await checkoutComplete({ checkoutId: checkout.id });
+					if (completeResult.error || completeResult.data?.checkoutComplete?.errors?.length) {
+						throw new Error(
+							completeResult.data?.checkoutComplete?.errors?.[0]?.message || "Failed to complete free order",
+						);
+					}
+					const saleorOrder = completeResult.data?.checkoutComplete?.order;
+					if (saleorOrder) {
+						const newQuery = createQueryString(searchParams, { orderId: saleorOrder.id });
+						router.replace(`?${newQuery}`, { scroll: false });
+					} else {
+						onComplete();
+					}
+					return;
+				} else if (paymentMethod === "razorpay") {
 					// 1. Call Next.js API to create Razorpay Order
 					const response = await fetch("/api/razorpay", {
 						method: "POST",
@@ -451,6 +468,7 @@ export const PaymentStep: FC<PaymentStepProps> = ({
 			onComplete,
 			searchParams,
 			router,
+			isFreeOrder,
 		],
 	);
 
@@ -463,12 +481,14 @@ export const PaymentStep: FC<PaymentStepProps> = ({
 		? completeState.fetching
 			? "Creating order..."
 			: "Processing payment..."
-		: `Pay ${totalStr}`;
+		: isFreeOrder
+			? "Place Order"
+			: `Pay ${totalStr}`;
 
 	const isDisabled =
 		isLoading ||
-		(paymentMethod !== "razorpay" && !hasDummyGateway && !hasRealGateway) ||
-		(paymentMethod === "card" && !hasDummyGateway && !isCardValid);
+		(!isFreeOrder && paymentMethod !== "razorpay" && !hasDummyGateway && !hasRealGateway) ||
+		(!isFreeOrder && paymentMethod === "card" && !hasDummyGateway && !isCardValid);
 
 	return (
 		<form className="space-y-8" onSubmit={handleSubmit}>
@@ -476,7 +496,7 @@ export const PaymentStep: FC<PaymentStepProps> = ({
 			<CheckoutSummaryContext checkout={checkout} rows={summaryRows} onGoToStep={handleGoToStep} />
 
 			{/* No Payment Gateway Warning */}
-			{paymentMethod !== "razorpay" && !hasDummyGateway && !hasRealGateway && (
+			{!isFreeOrder && paymentMethod !== "razorpay" && !hasDummyGateway && !hasRealGateway && (
 				<div className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4">
 					<AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
 					<div>
@@ -490,7 +510,7 @@ export const PaymentStep: FC<PaymentStepProps> = ({
 			)}
 
 			{/* Test Mode Indicator */}
-			{paymentMethod !== "razorpay" && hasDummyGateway && !hasRealGateway && (
+			{!isFreeOrder && paymentMethod !== "razorpay" && hasDummyGateway && !hasRealGateway && (
 				<div className="flex items-start gap-3 rounded-lg border border-blue-200 bg-blue-50 p-4">
 					<AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-blue-600" />
 					<div>
@@ -502,13 +522,28 @@ export const PaymentStep: FC<PaymentStepProps> = ({
 				</div>
 			)}
 
+			{/* Free Order Indicator */}
+			{isFreeOrder && (
+				<div className="flex items-start gap-3 rounded-lg border border-green-200 bg-green-50 p-4">
+					<AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-green-600" />
+					<div>
+						<p className="font-medium text-green-800">Free Order</p>
+						<p className="mt-1 text-sm text-green-700">
+							Your order total is {totalStr}. No payment is required.
+						</p>
+					</div>
+				</div>
+			)}
+
 			{/* Payment Method */}
-			<PaymentMethodSelector
-				value={paymentMethod}
-				onChange={setPaymentMethod}
-				cardData={cardData}
-				onCardDataChange={setCardData}
-			/>
+			{!isFreeOrder && (
+				<PaymentMethodSelector
+					value={paymentMethod}
+					onChange={setPaymentMethod}
+					cardData={cardData}
+					onCardDataChange={setCardData}
+				/>
+			)}
 
 			{/* Billing Address */}
 			<BillingAddressSection
