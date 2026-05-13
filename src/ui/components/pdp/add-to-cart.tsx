@@ -1,9 +1,11 @@
 "use client";
 
 import { useFormStatus } from "react-dom";
+import { useEffect, useRef } from "react";
 import { ShoppingBag } from "lucide-react";
 import { Button } from "@/ui/components/ui/button";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 interface AddToCartProps {
 	price: string;
@@ -21,6 +23,16 @@ function AddToCartButton({
 	disabledReason?: "no-selection" | "out-of-stock";
 }) {
 	const { pending } = useFormStatus();
+	const prevPending = useRef(pending);
+
+	useEffect(() => {
+		if (prevPending.current && !pending) {
+			toast.success("Added to bag", {
+				position: "top-center",
+			});
+		}
+		prevPending.current = pending;
+	}, [pending]);
 
 	const getButtonText = () => {
 		if (pending) return "Adding...";

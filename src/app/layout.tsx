@@ -5,6 +5,7 @@ import { type ReactNode } from "react";
 import { rootMetadata } from "@/lib/seo";
 import { localeConfig } from "@/config/locale";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import { Toaster } from "@/ui/components/ui/toaster";
 
 /**
  * Root metadata for the entire site.
@@ -29,6 +30,7 @@ export default function RootLayout(props: { children: ReactNode }) {
 			<body className="min-h-dvh font-sans">
 				{children}
 				<SpeedInsights />
+				<Toaster />
 			</body>
 		</html>
 	);
