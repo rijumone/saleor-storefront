@@ -112,7 +112,7 @@ export function ProductAttributes({
 					Shipping & Returns
 				</AccordionTrigger>
 				<AccordionContent className="leading-relaxed text-muted-foreground">
-					<p className="mb-2">Free shipping on orders over €100. Standard delivery 3-5 business days.</p>
+					<p className="mb-2">Free shipping. Period. Standard delivery 5-7 business days.</p>
 					<p>Free returns within 30 days of purchase. Items must be unworn with tags attached.</p>
 				</AccordionContent>
 			</AccordionItemWithContext>
