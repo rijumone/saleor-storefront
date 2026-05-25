@@ -3,6 +3,65 @@ import { NavLink } from "./nav-link";
 import { executePublicGraphQL } from "@/lib/graphql";
 import { MenuGetBySlugDocument } from "@/gql/graphql";
 import { CACHE_PROFILES, applyCacheProfile } from "@/lib/cache-manifest";
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuTrigger,
+	DropdownMenuSub,
+	DropdownMenuSubTrigger,
+	DropdownMenuSubContent,
+	DropdownMenuPortal,
+} from "@/ui/components/ui/dropdown-menu";
+import { ChevronDown } from "lucide-react";
+import { LinkWithChannel } from "@/ui/atoms/link-with-channel";
+
+// Helper function to get href from a menu item
+function getMenuItemHref(item: any) {
+	if (item.category) return `/categories/${item.category.slug}`;
+	if (item.collection) return `/collections/${item.collection.slug}`;
+	if (item.page) return `/pages/${item.page.slug}`;
+	if (item.url) return item.url;
+	return "";
+}
+
+function RecursiveMenuNode({ item }: { item: any }) {
+	const hasChildren = item.children && item.children.length > 0;
+	const href = getMenuItemHref(item);
+
+	if (hasChildren) {
+		return (
+			<DropdownMenuSub>
+				<DropdownMenuSubTrigger className="cursor-pointer">{item.name}</DropdownMenuSubTrigger>
+				<DropdownMenuPortal>
+					<DropdownMenuSubContent className="w-48">
+						{href && (
+							<DropdownMenuItem asChild>
+								<LinkWithChannel href={href} className="w-full cursor-pointer">
+									All {item.name}
+								</LinkWithChannel>
+							</DropdownMenuItem>
+						)}
+						{item.children.map((child: any) => {
+							if (!child) return null;
+							return <RecursiveMenuNode key={child.id} item={child} />;
+						})}
+					</DropdownMenuSubContent>
+				</DropdownMenuPortal>
+			</DropdownMenuSub>
+		);
+	}
+
+	if (!href) return null;
+
+	return (
+		<DropdownMenuItem asChild>
+			<LinkWithChannel href={href} className="w-full cursor-pointer">
+				{item.name}
+			</LinkWithChannel>
+		</DropdownMenuItem>
+	);
+}
 
 export const NavLinks = async ({ channel }: { channel: string }) => {
 	"use cache";
@@ -24,34 +83,57 @@ export const NavLinks = async ({ channel }: { channel: string }) => {
 		<>
 			<NavLink href="/products">All</NavLink>
 			{result.data.menu?.items?.map((item) => {
-				if (item.category) {
+				const hasChildren = item.children && item.children.length > 0;
+				const href = getMenuItemHref(item);
+
+				if (hasChildren) {
 					return (
-						<NavLink key={item.id} href={`/categories/${item.category.slug}`}>
-							{item.category.name}
-						</NavLink>
+						<li key={item.id} className="inline-flex">
+							<DropdownMenu>
+								<DropdownMenuTrigger className="flex items-center gap-1 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
+									{item.name}
+									<ChevronDown className="h-4 w-4" />
+								</DropdownMenuTrigger>
+								<DropdownMenuContent align="start" className="w-48">
+									{href && (
+										<DropdownMenuItem asChild>
+											<LinkWithChannel href={href} className="w-full cursor-pointer">
+												All {item.name}
+											</LinkWithChannel>
+										</DropdownMenuItem>
+									)}
+									{item.children?.map((child: any) => {
+										if (!child) return null;
+										return <RecursiveMenuNode key={child.id} item={child} />;
+									})}
+								</DropdownMenuContent>
+							</DropdownMenu>
+						</li>
 					);
 				}
-				if (item.collection) {
+
+				if (item.url && !item.category && !item.collection && !item.page) {
 					return (
-						<NavLink key={item.id} href={`/collections/${item.collection.slug}`}>
-							{item.collection.name}
-						</NavLink>
+						<li key={item.id} className="inline-flex">
+							<Link
+								href={item.url}
+								prefetch={false}
+								className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+							>
+								{item.name}
+							</Link>
+						</li>
 					);
 				}
-				if (item.page) {
+
+				if (href) {
 					return (
-						<NavLink key={item.id} href={`/pages/${item.page.slug}`}>
-							{item.page.title}
-						</NavLink>
-					);
-				}
-				if (item.url) {
-					return (
-						<Link key={item.id} href={item.url} prefetch={false}>
+						<NavLink key={item.id} href={href}>
 							{item.name}
-						</Link>
+						</NavLink>
 					);
 				}
+
 				return null;
 			})}
 		</>

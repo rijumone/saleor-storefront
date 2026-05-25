@@ -26,6 +26,12 @@ query MenuGetBySlug($slug: String!, $channel: String!) {
 			...MenuItem
 			children {
 				...MenuItem
+				children {
+					...MenuItem
+					children {
+						...MenuItem
+					}
+				}
 			}
 		}
 	}
