@@ -123,6 +123,7 @@ async function ProductContent({
 	const descriptionHtml = parseDescription(product.description);
 	const images = getGalleryImages(product, selectedVariant);
 	const productAttributes = extractProductAttributes(product);
+	const variantMeasurements = extractVariantMeasurements(selectedVariant);
 	const careInstructions = extractCareInstructions(product);
 
 	const breadcrumbs = [
@@ -193,6 +194,7 @@ async function ProductContent({
 							<ProductAttributes
 								descriptionHtml={descriptionHtml}
 								attributes={productAttributes}
+								measurements={variantMeasurements}
 								careInstructions={careInstructions}
 							/>
 						</div>
@@ -279,6 +281,26 @@ function extractCareInstructions(product: NonNullable<ProductDetailsQuery["produ
 			.filter(Boolean)
 			.join(". ") || null
 	);
+}
+
+function extractVariantMeasurements(
+	variant: Variant | null | undefined,
+): { name: string; value: string | string[] }[] {
+	if (!variant || !variant.nonSelectionAttributes) return [];
+
+	return variant.nonSelectionAttributes
+		.filter((attr) => attr.attribute.name)
+		.map((attr) => ({
+			name: attr.attribute.name!,
+			value:
+				attr.values.length === 1
+					? attr.values[0]?.name ?? ""
+					: attr.values.map((v) => v.name ?? "").filter(Boolean),
+		}))
+		.filter((attr) => {
+			if (Array.isArray(attr.value)) return attr.value.length > 0;
+			return attr.value !== "";
+		});
 }
 
 type Product = NonNullable<ProductDetailsQuery["product"]>;

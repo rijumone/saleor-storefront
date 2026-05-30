@@ -1,6 +1,6 @@
 "use client";
 
-import { Shirt, Leaf, Droplets, Ruler, Sparkles } from "lucide-react";
+import { Shirt, Leaf, Droplets, Ruler, Sparkles, PencilRuler } from "lucide-react";
 import {
 	Accordion,
 	AccordionItemWithContext,
@@ -22,6 +22,7 @@ interface ProductAttributesProps {
 	 */
 	descriptionHtml?: string[] | null;
 	attributes?: Attribute[];
+	measurements?: Attribute[];
 	careInstructions?: string | null;
 }
 
@@ -53,10 +54,17 @@ function formatValue(value: string | boolean | string[]): ReactNode {
 export function ProductAttributes({
 	descriptionHtml,
 	attributes = [],
+	measurements = [],
 	careInstructions,
 }: ProductAttributesProps) {
 	// Filter out variant attributes that are shown elsewhere (Size, Color)
 	const displayAttributes = attributes.filter((attr) => !["Size", "Color"].includes(attr.name));
+
+	const measurementIcons = [
+		<Ruler key="ruler" className="h-4 w-4" />,
+		<PencilRuler key="pencil-ruler" className="h-4 w-4" />,
+		<Shirt key="shirt" className="h-4 w-4" />,
+	];
 
 	return (
 		<Accordion type="multiple" defaultValue={["description"]} className="w-full">
@@ -86,6 +94,27 @@ export function ProductAttributes({
 								<div key={attr.name} className="flex items-start justify-between gap-4 text-sm">
 									<span className="flex items-center gap-2 text-muted-foreground">
 										{attributeIcons[attr.name]}
+										{attr.name}
+									</span>
+									<span className="text-right font-medium">{formatValue(attr.value)}</span>
+								</div>
+							))}
+						</div>
+					</AccordionContent>
+				</AccordionItemWithContext>
+			)}
+
+			{measurements.length > 0 && (
+				<AccordionItemWithContext value="measurements" className="border-border">
+					<AccordionTrigger className="py-4 text-sm font-medium hover:no-underline">
+						Measurement
+					</AccordionTrigger>
+					<AccordionContent>
+						<div className="grid gap-3">
+							{measurements.map((attr, index) => (
+								<div key={attr.name} className="flex items-start justify-between gap-4 text-sm">
+									<span className="flex items-center gap-2 text-muted-foreground">
+										{attributeIcons[attr.name] || measurementIcons[index % measurementIcons.length]}
 										{attr.name}
 									</span>
 									<span className="text-right font-medium">{formatValue(attr.value)}</span>
