@@ -1,4 +1,4 @@
-# AI Agent Guidelines for Saleor Storefront
+# AI Agent Guidelines for Rijuvenation
 
 This document provides essential context for AI agents. For detailed task-specific instructions, see the **Skills** below.
 
