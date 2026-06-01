@@ -107,7 +107,7 @@ export function ProductAttributes({
 			{measurements.length > 0 && (
 				<AccordionItemWithContext value="measurements" className="border-border">
 					<AccordionTrigger className="py-4 text-sm font-medium hover:no-underline">
-						Measurement
+						Measurement (inches)
 					</AccordionTrigger>
 					<AccordionContent>
 						<div className="grid gap-3">
