@@ -77,8 +77,6 @@ async function CollectionContent({
 		notFound();
 	}
 
-	const plainDescription = parseEditorJSToText(collection.description);
-
 	const breadcrumbs = [
 		{ label: "Home", href: `/${params.channel}` },
 		{ label: collection.name, href: `/${params.channel}/collections/${params.slug}` },
@@ -88,7 +86,7 @@ async function CollectionContent({
 		<>
 			<CategoryHero
 				title={collection.name}
-				description={plainDescription}
+				description={collection.description}
 				backgroundImage={collection.backgroundImage?.url}
 				breadcrumbs={breadcrumbs}
 			/>

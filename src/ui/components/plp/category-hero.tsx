@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import { WavePattern } from "./wave-pattern";
+import { parseEditorJSToHtml } from "@/lib/editorjs";
 
 interface BreadcrumbItem {
 	label: string;
@@ -18,7 +19,7 @@ export function CategoryHero({ title, description, backgroundImage, breadcrumbs 
 	const hasImage = !!backgroundImage;
 
 	return (
-		<section className="relative h-[340px] overflow-hidden border-b border-border">
+		<section className="relative min-h-[340px] overflow-hidden border-b border-border">
 			{/* Background */}
 			<div className="absolute inset-0">
 				{hasImage ? (
@@ -35,25 +36,14 @@ export function CategoryHero({ title, description, backgroundImage, breadcrumbs 
 			{/* Content - text colors adapt based on background */}
 			<div className="relative mx-auto flex h-full max-w-7xl flex-col justify-end px-4 pb-10 sm:px-6 lg:px-8">
 				{/* Breadcrumbs */}
-				<nav
-					className={`mb-4 flex items-center gap-1.5 text-sm ${
-						hasImage ? "text-background/70" : "text-muted-foreground"
-					}`}
-				>
+				<nav className="mb-4 flex items-center gap-1.5 text-sm text-muted-foreground">
 					{breadcrumbs.map((crumb, index) => (
 						<span key={crumb.href} className="flex items-center gap-1.5">
 							{index > 0 && <ChevronRight className="h-3.5 w-3.5" />}
 							{index === breadcrumbs.length - 1 ? (
-								<span className={`font-medium ${hasImage ? "text-background" : "text-foreground"}`}>
-									{crumb.label}
-								</span>
+								<span className="font-medium text-foreground">{crumb.label}</span>
 							) : (
-								<Link
-									href={crumb.href}
-									className={`transition-colors ${
-										hasImage ? "hover:text-background" : "hover:text-foreground"
-									}`}
-								>
+								<Link href={crumb.href} className="transition-colors hover:text-foreground">
 									{crumb.label}
 								</Link>
 							)}
@@ -61,23 +51,29 @@ export function CategoryHero({ title, description, backgroundImage, breadcrumbs 
 					))}
 				</nav>
 
-				<h1
-					className={`text-3xl font-semibold tracking-tight md:text-4xl lg:text-5xl ${
-						hasImage ? "text-background" : "text-foreground"
-					}`}
-				>
+				<h1 className="text-3xl font-semibold tracking-tight text-foreground md:text-4xl lg:text-5xl">
 					{title}
 				</h1>
-				{description && (
-					<p
-						className={`mt-3 max-w-lg text-base md:text-lg ${
-							hasImage ? "text-background/80" : "text-muted-foreground"
-						}`}
-					>
-						{description}
-					</p>
-				)}
+				{description && <RichDescription description={description} />}
 			</div>
 		</section>
 	);
+}
+
+function RichDescription({ description }: { description: string }) {
+	const htmlBlocks = parseEditorJSToHtml(description);
+	const baseClass = "mt-3 max-w-lg text-base md:text-lg text-muted-foreground";
+
+	if (htmlBlocks) {
+		return (
+			<div className={baseClass}>
+				{htmlBlocks.map((html, i) => (
+					<p key={i} dangerouslySetInnerHTML={{ __html: html }} className={i > 0 ? "mt-2" : ""} />
+				))}
+			</div>
+		);
+	}
+
+	// Fallback for plain text descriptions
+	return <p className={baseClass}>{description}</p>;
 }
