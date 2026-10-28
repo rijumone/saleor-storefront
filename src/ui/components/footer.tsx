@@ -197,20 +197,20 @@ export async function Footer({ channel }: { channel: string }) {
 						<CopyrightText />
 					</p>
 					<div className="flex items-center gap-6">
-						<Link
-							href="/privacy"
+						<LinkWithChannel
+							href="/pages/privacy"
 							prefetch={false}
 							className="text-xs text-neutral-500 transition-colors hover:text-neutral-300"
 						>
 							Privacy Policy
-						</Link>
-						<Link
-							href="/terms"
+						</LinkWithChannel>
+						<LinkWithChannel
+							href="/pages/terms"
 							prefetch={false}
 							className="text-xs text-neutral-500 transition-colors hover:text-neutral-300"
 						>
 							Terms of Service
-						</Link>
+						</LinkWithChannel>
 					</div>
 				</div>
 			</div>
