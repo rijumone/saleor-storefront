@@ -3,12 +3,19 @@
 import { useEffect, useRef } from "react";
 import { v4 as uuidv4 } from "uuid";
 
+// Inlined at build time. Undefined means recording is not configured, in which
+// case this component does nothing: it must never fall back to a localhost URL,
+// because "localhost" in a visitor's browser is that visitor's own machine.
+const RRWEB_API_URL = process.env.NEXT_PUBLIC_RRWEB_API_URL;
+
 export default function SessionRecorder() {
 	const eventsRef = useRef<any[]>([]);
 	const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 	const sessionIdRef = useRef<string>("");
 
 	useEffect(() => {
+		if (!RRWEB_API_URL) return;
+
 		let stopRecording: (() => void) | undefined;
 
 		// 1. Get or Generate Session ID
@@ -33,7 +40,7 @@ export default function SessionRecorder() {
 			});
 
 		// 3. Batch Upload Every 3 Seconds
-		const apiUrl = process.env.NEXT_PUBLIC_RRWEB_API_URL || "http://localhost:8082/events";
+		const apiUrl = RRWEB_API_URL;
 
 		intervalRef.current = setInterval(() => {
 			if (eventsRef.current.length > 0) {

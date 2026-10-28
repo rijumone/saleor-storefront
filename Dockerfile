@@ -27,10 +27,23 @@ COPY . .
 ENV NEXT_OUTPUT=standalone
 ARG NEXT_PUBLIC_SALEOR_API_URL
 ENV NEXT_PUBLIC_SALEOR_API_URL=${NEXT_PUBLIC_SALEOR_API_URL}
+# Optional. Set only when the browser and the server reach Saleor through
+# different hosts (local Docker). Leave empty in production so Next.js keeps
+# image optimisation on. See image-loader.js.
+ARG NEXT_PUBLIC_SALEOR_MEDIA_ORIGIN
+ENV NEXT_PUBLIC_SALEOR_MEDIA_ORIGIN=${NEXT_PUBLIC_SALEOR_MEDIA_ORIGIN}
 ARG NEXT_PUBLIC_STOREFRONT_URL
 ENV NEXT_PUBLIC_STOREFRONT_URL=${NEXT_PUBLIC_STOREFRONT_URL}
 ARG NEXT_PUBLIC_DEFAULT_CHANNEL
 ENV NEXT_PUBLIC_DEFAULT_CHANNEL=${NEXT_PUBLIC_DEFAULT_CHANNEL}
+# Optional. Session recorder endpoint, inlined into the client bundle at build
+# time. When empty, SessionRecorder disables itself instead of posting to a
+# localhost URL. See src/ui/components/SessionRecorder.tsx.
+ARG NEXT_PUBLIC_RRWEB_API_URL
+ENV NEXT_PUBLIC_RRWEB_API_URL=${NEXT_PUBLIC_RRWEB_API_URL}
+
+# Skip codegen during Docker build — generated files are already in the build context
+ENV SKIP_CODEGEN=1
 
 # Get PNPM version from package.json
 ENV PNPM_HOME="/pnpm"

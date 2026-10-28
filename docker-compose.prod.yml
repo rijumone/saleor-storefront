@@ -43,6 +43,11 @@ services:
         NEXT_PUBLIC_SALEOR_API_URL: ${NEXT_PUBLIC_SALEOR_API_URL:?Set NEXT_PUBLIC_SALEOR_API_URL in .env}
         NEXT_PUBLIC_STOREFRONT_URL: ${NEXT_PUBLIC_STOREFRONT_URL:-https://www.rijuvenation.store}
         NEXT_PUBLIC_DEFAULT_CHANNEL: ${NEXT_PUBLIC_DEFAULT_CHANNEL:-in}
+        # Client-side session recorder endpoint, inlined at build time. Optional:
+        # when empty the recorder disables itself instead of posting to
+        # localhost. It cannot come from env_file, because env_file only reaches
+        # the container at runtime and NEXT_PUBLIC_* is fixed at build.
+        NEXT_PUBLIC_RRWEB_API_URL: ${NEXT_PUBLIC_RRWEB_API_URL:-}
         # NEXT_PUBLIC_SALEOR_MEDIA_ORIGIN stays unset on purpose.
     restart: unless-stopped
     env_file:
