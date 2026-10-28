@@ -71,36 +71,21 @@ jobs:
           echo "Env file        : $env_file"
 
       - name: Update checkout
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TARGET_SHA: ${{ github.sha }}
         run: |
           set -euo pipefail
           cd "$REPO_ROOT"
 
-          # Authenticate HTTPS remotes without persisting the token: the header
-          # is passed through the environment only, never written to .git/config.
-          # SSH remotes use the host's existing deploy key and need nothing here.
-          if [[ "$(git remote get-url origin)" == https://* ]]; then
-            export GIT_CONFIG_COUNT=1
-            export GIT_CONFIG_KEY_0="http.https://github.com/.extraheader"
-            export GIT_CONFIG_VALUE_0="AUTHORIZATION: basic $(printf 'x-access-token:%s' "$GH_TOKEN" | base64 | tr -d '\n')"
-          fi
+          # On an authentication failure these lines identify the cause: the
+          # remote tells you whether the runner is using HTTPS (needs a token or
+          # credential helper) or SSH (needs a deploy key for this user).
+          echo "origin : $(git remote get-url origin)"
+          echo "user   : $(id -un) ($(id -u))"
+          echo "home   : $HOME"
 
-          git fetch --prune --tags origin '+refs/heads/*:refs/remotes/origin/*'
+          # Discard anything uncommitted in the deploy tree before pulling.
+          git reset --hard HEAD
 
-          # github.sha is the commit that triggered the run, which may be older
-          # than origin/main if another push landed meanwhile. Reset to it so the
-          # deploy matches what the Actions UI reports.
-          if ! git cat-file -e "${TARGET_SHA}^{commit}" 2>/dev/null; then
-            echo "::error::Commit $TARGET_SHA is not reachable from any fetched branch"
-            exit 1
-          fi
-
-          git reset --hard "$TARGET_SHA"
-          # -ffd without -x: removes stray untracked files but keeps gitignored
-          # ones such as .env, so the live secrets are never deleted here.
-          git clean -ffd
+          git pull -v origin main
 
           echo "Now at $(git rev-parse --short HEAD) ($(git log -1 --format=%s))"
 
