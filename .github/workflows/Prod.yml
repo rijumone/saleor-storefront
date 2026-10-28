@@ -104,9 +104,19 @@ jobs:
 
           # Expose it to the compose project. Compose reads ./.env, relative to
           # the compose file directory, for both ${VAR} interpolation and env_file.
-          ln -sfn "$ENV_FILE" "$REPO_ROOT/.env"
+          #
+          # The env file often already lives at the compose project root — for
+          # example PROD_ENV_FILE=$REPO_ROOT/.env. Linking a file onto itself
+          # fails, so detect that case (-ef compares device and inode) and keep
+          # the file where it is.
+          env_dst="$REPO_ROOT/.env"
+          if [ "$ENV_FILE" -ef "$env_dst" ]; then
+            echo "Env file is already at $env_dst"
+          else
+            ln -sfn "$ENV_FILE" "$env_dst"
+            echo "Linked $ENV_FILE -> $env_dst"
+          fi
           chmod 600 "$ENV_FILE" || true
-          echo "Linked $ENV_FILE -> $REPO_ROOT/.env"
 
           # Fail before touching the live container if a secret the app needs at
           # runtime is absent. Without these the revalidate endpoints 401
