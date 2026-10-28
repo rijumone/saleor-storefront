@@ -1,0 +1,85 @@
+# Production stack for the Rijuvenation storefront.
+#
+# Differences from docker-compose.yml (local development):
+#
+#   - No host networking at build time. The build reaches Saleor over the public
+#     internet (https://api.rijuvenation.store), not over localhost.
+#   - No SALEOR_API_URL. In production the server and the browser use the same
+#     public Saleor host, so no internal DNS name is needed.
+#   - No NEXT_PUBLIC_SALEOR_MEDIA_ORIGIN. That variable switches on the custom
+#     image loader, which exists only for local Docker, where the browser uses
+#     localhost:8000 and the container uses api:8000. With it unset, Next.js uses
+#     the default loader and keeps image optimisation on.
+#   - The app binds to the loopback interface. Put a reverse proxy in front of it
+#     to terminate TLS.
+#
+# Usage on the server:
+#
+#   docker compose -f docker-compose.prod.yml up -d --build
+#
+# The project name is separate from the local stack, so both files can live in
+# the same checkout without replacing each other's containers.
+#
+# Required values in .env on the server:
+#
+#   NEXT_PUBLIC_SALEOR_API_URL=https://api.rijuvenation.store/graphql/
+#   NEXT_PUBLIC_STOREFRONT_URL=https://www.rijuvenation.store
+#   NEXT_PUBLIC_DEFAULT_CHANNEL=in
+#   SECRET_KEY=...
+#   RAZORPAY_KEY_ID=...
+#   RAZORPAY_KEY_SECRET=...
+#   REVALIDATE_SECRET=...
+#   SALEOR_WEBHOOK_SECRET=...
+
+name: rijuvenation
+
+services:
+  saleor-storefront:
+    image: rijuvenation-storefront:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_SALEOR_API_URL: ${NEXT_PUBLIC_SALEOR_API_URL:?Set NEXT_PUBLIC_SALEOR_API_URL in .env}
+        NEXT_PUBLIC_STOREFRONT_URL: ${NEXT_PUBLIC_STOREFRONT_URL:-https://www.rijuvenation.store}
+        NEXT_PUBLIC_DEFAULT_CHANNEL: ${NEXT_PUBLIC_DEFAULT_CHANNEL:-in}
+        # NEXT_PUBLIC_SALEOR_MEDIA_ORIGIN stays unset on purpose.
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      # Next.js standalone server options (see CMD in the Dockerfile).
+      PORT: 3000
+      HOSTNAME: 0.0.0.0
+      # Keep the runtime values equal to the build args, so the server never
+      # reads a different host from a stale .env file.
+      NEXT_PUBLIC_SALEOR_API_URL: ${NEXT_PUBLIC_SALEOR_API_URL:?Set NEXT_PUBLIC_SALEOR_API_URL in .env}
+      NEXT_PUBLIC_STOREFRONT_URL: ${NEXT_PUBLIC_STOREFRONT_URL:-https://www.rijuvenation.store}
+      NEXT_PUBLIC_DEFAULT_CHANNEL: ${NEXT_PUBLIC_DEFAULT_CHANNEL:-in}
+      # No SALEOR_API_URL on purpose: the server must use the public API host,
+      # because the image optimizer fetches Saleor media from the server side.
+    ports:
+      # Loopback only by default. The reverse proxy reaches the app on
+      # 127.0.0.1:3000. Set BIND_ADDR=0.0.0.0 only if the proxy cannot reach
+      # loopback, for example when the proxy runs in another container.
+      - "${BIND_ADDR:-127.0.0.1}:${PORT:-3000}:3000"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:3000/in"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 40s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+# Reverse proxy notes:
+#   - Proxy on the host (nginx, Caddy): keep the loopback port mapping above.
+#   - Proxy in a container (Traefik, Coolify): remove the "ports" mapping and
+#     attach both containers to one network, for example
+#       networks: [proxy]
+#       networks:
+#         proxy:
+#           external: true

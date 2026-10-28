@@ -1,6 +1,12 @@
 Dockerfile
 .dockerignore
 node_modules
+# Secrets must never enter the build context: the builder stage runs `COPY . .`
+# and Next.js would also load this file at build time. Runtime secrets reach the
+# container through docker compose `env_file` instead.
+.env
+.env.*
+!.env.example
 npm-debug.log
 README.md
 .next

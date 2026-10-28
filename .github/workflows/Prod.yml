@@ -1,0 +1,168 @@
+name: Deploy production
+
+# Deploys the storefront to the self-hosted runner that lives on the production
+# host. The runner is the same machine that runs the containers, so no SSH is
+# involved: the job updates a persistent clone, builds the image and recreates
+# the stack.
+#
+# There is no actions/checkout step. The job operates on an existing clone on
+# the host, located at REPO_ROOT (repository variable, defaults to
+#   $HOME/saleor-storefront/
+# which must already exist as a git clone before the first run).
+#
+# Only `push` to main and manual dispatch. Do NOT add `pull_request` here: a
+# self-hosted runner executes job code on the host, so a fork PR must never be
+# able to reach this workflow.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Serialise deploys. Never cancel one that is already recreating the live
+# container, that would leave the stack in an indeterminate state.
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  COMPOSE_FILE: docker-compose.prod.yml
+  # Repository variables. Both may be left unset; the defaults are resolved in
+  # the "Resolve deployment paths" step.
+  REPO_ROOT: ${{ vars.REPO_ROOT }}
+  PROD_ENV_FILE: ${{ vars.PROD_ENV_FILE }}
+
+jobs:
+  deploy:
+    name: Build and restart
+    runs-on: [self-hosted, Prod]
+    environment: production
+    timeout-minutes: 45
+
+    steps:
+      - name: Resolve deployment paths
+        run: |
+          set -euo pipefail
+
+          repo_root="${REPO_ROOT:-$HOME/saleor-storefront/}"
+          env_file="${PROD_ENV_FILE:-$HOME/saleor-storefront/.env}"
+
+          # Normalise to an absolute path so relative values in the variables do
+          # not depend on the runner's working directory.
+          if ! repo_root="$(cd "$repo_root" 2>/dev/null && pwd)"; then
+            echo "::error::REPO_ROOT does not exist: ${REPO_ROOT:-$HOME/saleor-storefront/}"
+            echo "Clone the repository there once, or set the REPO_ROOT repository variable."
+            exit 1
+          fi
+
+          if [ ! -d "$repo_root/.git" ]; then
+            echo "::error::$repo_root is not a git checkout (no .git directory)"
+            exit 1
+          fi
+
+          {
+            echo "REPO_ROOT=$repo_root"
+            echo "ENV_FILE=$env_file"
+          } >> "$GITHUB_ENV"
+          echo "Compose project : $repo_root"
+          echo "Env file        : $env_file"
+
+      - name: Update checkout
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TARGET_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          cd "$REPO_ROOT"
+
+          # Authenticate HTTPS remotes without persisting the token: the header
+          # is passed through the environment only, never written to .git/config.
+          # SSH remotes use the host's existing deploy key and need nothing here.
+          if [[ "$(git remote get-url origin)" == https://* ]]; then
+            export GIT_CONFIG_COUNT=1
+            export GIT_CONFIG_KEY_0="http.https://github.com/.extraheader"
+            export GIT_CONFIG_VALUE_0="AUTHORIZATION: basic $(printf 'x-access-token:%s' "$GH_TOKEN" | base64 | tr -d '\n')"
+          fi
+
+          git fetch --prune --tags origin '+refs/heads/*:refs/remotes/origin/*'
+
+          # github.sha is the commit that triggered the run, which may be older
+          # than origin/main if another push landed meanwhile. Reset to it so the
+          # deploy matches what the Actions UI reports.
+          if ! git cat-file -e "${TARGET_SHA}^{commit}" 2>/dev/null; then
+            echo "::error::Commit $TARGET_SHA is not reachable from any fetched branch"
+            exit 1
+          fi
+
+          git reset --hard "$TARGET_SHA"
+          # -ffd without -x: removes stray untracked files but keeps gitignored
+          # ones such as .env, so the live secrets are never deleted here.
+          git clean -ffd
+
+          echo "Now at $(git rev-parse --short HEAD) ($(git log -1 --format=%s))"
+
+      - name: Preflight
+        run: |
+          set -euo pipefail
+
+          docker version >/dev/null
+          docker compose version
+
+          if [ ! -f "$ENV_FILE" ]; then
+            echo "::error::Env file not found: $ENV_FILE"
+            echo "Create it on the runner host, or set the PROD_ENV_FILE repository variable."
+            exit 1
+          fi
+
+          # Expose it to the compose project. Compose reads ./.env, relative to
+          # the compose file directory, for both ${VAR} interpolation and env_file.
+          ln -sfn "$ENV_FILE" "$REPO_ROOT/.env"
+          chmod 600 "$ENV_FILE" || true
+          echo "Linked $ENV_FILE -> $REPO_ROOT/.env"
+
+          # Fail before touching the live container if a secret the app needs at
+          # runtime is absent. Without these the revalidate endpoints 401
+          # silently instead of crashing.
+          missing=0
+          for key in \
+            NEXT_PUBLIC_SALEOR_API_URL \
+            NEXT_PUBLIC_DEFAULT_CHANNEL \
+            REVALIDATE_SECRET \
+            SALEOR_WEBHOOK_SECRET
+          do
+            if ! grep -qE "^${key}=.+" "$ENV_FILE"; then
+              echo "::error::$key is missing or empty in $ENV_FILE"
+              missing=1
+            fi
+          done
+          [ "$missing" -eq 0 ] || exit 1
+
+          # Validate interpolation and build args before spending time on a build.
+          docker compose -f "$REPO_ROOT/$COMPOSE_FILE" config --quiet
+          echo "Compose config is valid."
+
+      - name: Build image
+        run: docker compose -f "$REPO_ROOT/$COMPOSE_FILE" build
+
+      - name: Restart stack
+        # --wait blocks until the service healthcheck passes, so a container
+        # that starts but cannot serve /in fails the job instead of going live.
+        run: |
+          set -euo pipefail
+          docker compose -f "$REPO_ROOT/$COMPOSE_FILE" up -d --remove-orphans --wait --wait-timeout 180
+
+      - name: Show status
+        run: docker compose -f "$REPO_ROOT/$COMPOSE_FILE" ps
+
+      - name: Dump logs on failure
+        if: failure()
+        # `|| true` keeps a failure here from masking the real error above.
+        run: docker compose -f "$REPO_ROOT/$COMPOSE_FILE" logs --no-color --tail=200 || true
+
+      - name: Prune superseded images
+        # The image is tagged :latest, so each build leaves the previous one
+        # untagged. Safe to prune only after the new container is up.
+        run: docker image prune -f --filter "dangling=true"
