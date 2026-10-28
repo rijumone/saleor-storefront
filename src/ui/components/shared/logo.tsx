@@ -21,13 +21,13 @@ interface LogoProps {
 }
 
 /**
- * Paper + Saleor combined logo (100x23, aspect ratio ~4.35:1)
+ * Rijuvenation wordmark (100x23, aspect ratio ~4.35:1)
  * Automatically switches between light/dark mode versions.
  *
  * Uses explicit width/height + aspect-ratio to prevent CLS while
  * allowing flexible sizing via className.
  */
-export const Logo = ({ className, ariaLabel = "Paper by Saleor", inverted = false }: LogoProps) => {
+export const Logo = ({ className, ariaLabel = "Rijuvenation", inverted = false }: LogoProps) => {
 	// When inverted, swap the light/dark mode logic
 	const lightModeLogo = inverted ? "/logo-dark.svg" : "/logo.svg";
 	const darkModeLogo = inverted ? "/logo.svg" : "/logo-dark.svg";
