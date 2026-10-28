@@ -124,9 +124,7 @@ jobs:
           missing=0
           for key in \
             NEXT_PUBLIC_SALEOR_API_URL \
-            NEXT_PUBLIC_DEFAULT_CHANNEL \
-            REVALIDATE_SECRET \
-            SALEOR_WEBHOOK_SECRET
+            NEXT_PUBLIC_DEFAULT_CHANNEL 
           do
             if ! grep -qE "^${key}=.+" "$ENV_FILE"; then
               echo "::error::$key is missing or empty in $ENV_FILE"
