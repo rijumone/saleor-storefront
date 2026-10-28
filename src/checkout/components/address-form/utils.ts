@@ -196,11 +196,43 @@ export const getOrderedAddressFields = (addressFields: AddressField[] = []): Add
 	);
 };
 
+/**
+ * Required for every address form, on top of the country rules from Saleor.
+ * The phone number is required because the courier needs it for delivery.
+ */
 export const getRequiredAddressFields = (requiredFields: AddressField[] = []): AddressField[] => [
 	...requiredFields,
 	"firstName",
 	"lastName",
+	"phone",
 ];
+
+/**
+ * Lightweight phone check that runs before the address reaches Saleor, which
+ * validates with libphonenumber. Spaces, dashes, dots, brackets and a leading
+ * "+" are accepted.
+ *
+ * India: 10 digits starting with 6-9, optionally prefixed with +91 or 91.
+ * Other countries: 6 to 15 digits (the E.164 range).
+ */
+export function isValidPhone(value: string, countryCode?: string | null): boolean {
+	const digits = value
+		.trim()
+		.replace(/^\+/, "")
+		.replace(/[\s\-().]/g, "");
+
+	if (!/^\d+$/.test(digits)) {
+		return false;
+	}
+
+	if (countryCode === "IN") {
+		const national = digits.length === 12 && digits.startsWith("91") ? digits.slice(2) : digits;
+
+		return /^[6-9]\d{9}$/.test(national);
+	}
+
+	return digits.length >= 6 && digits.length <= 15;
+}
 
 // api doesn't approve of "name" so we replace it with "firstName"
 // and "lastName"

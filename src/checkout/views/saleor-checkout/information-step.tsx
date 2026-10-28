@@ -17,6 +17,7 @@ import {
 	getAddressInputData,
 	getAddressInputDataFromAddress,
 	isMatchingAddressData,
+	isValidPhone,
 } from "@/checkout/components/address-form/utils";
 import { useUser } from "@/checkout/hooks/use-user";
 import { getQueryParams, createQueryString } from "@/checkout/lib/utils/url";
@@ -189,7 +190,14 @@ export const InformationStep: FC<InformationStepProps> = ({ checkout, onNext }) 
 	};
 
 	const handleFieldChange = (field: string, value: string) => {
-		setFormData((prev) => ({ ...prev, [field]: value }));
+		// Chrome's autofill can copy the contact email into the name fields when
+		// the saved profile has no name. Do not save that value to the address.
+		const isNameField = field === "firstName" || field === "lastName";
+		const isEmailCopied =
+			value.trim().length > 0 && value.trim().toLowerCase() === email.trim().toLowerCase();
+		const nextValue = isNameField && isEmailCopied ? "" : value;
+
+		setFormData((prev) => ({ ...prev, [field]: nextValue }));
 		if (errors[field]) setErrors((prev) => ({ ...prev, [field]: "" }));
 	};
 
@@ -268,6 +276,12 @@ export const InformationStep: FC<InformationStepProps> = ({ checkout, onNext }) 
 							newErrors[field] = `${getFieldLabel(field)} is required`;
 						}
 					});
+
+					// Phone is required, so also check the format before Saleor does.
+					const phone = formData.phone?.trim();
+					if (!newErrors.phone && phone && !isValidPhone(phone, countryCode)) {
+						newErrors.phone = "Enter a valid phone number";
+					}
 				}
 			}
 

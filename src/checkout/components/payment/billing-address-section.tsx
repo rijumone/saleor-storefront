@@ -10,6 +10,7 @@ import { type CountryCode, type AddressFragment } from "@/checkout/graphql";
 import { useAvailableShippingCountries } from "@/checkout/hooks/use-available-shipping-countries";
 import { getCountryName } from "@/checkout/lib/utils/locale";
 import { useAddressFormUtils } from "@/checkout/components/address-form/use-address-form-utils";
+import { isValidPhone } from "@/checkout/components/address-form/utils";
 import { HybridAddressSelector } from "@/checkout/components/shipping-address";
 
 export interface BillingAddressData {
@@ -316,6 +317,13 @@ export const useBillingAddressValidation = (countryCode: CountryCode) => {
 				errors[field] = `${getFieldLabel(field)} is required`;
 			}
 		});
+
+		// Phone is required, so also check the format before Saleor does.
+		const phone = formData.phone?.trim();
+		if (!errors.phone && phone && !isValidPhone(phone, countryCode)) {
+			errors.phone = "Enter a valid phone number";
+		}
+
 		return errors;
 	};
 

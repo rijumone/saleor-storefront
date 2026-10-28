@@ -55,6 +55,7 @@ export const FormSelect: FC<FormSelectProps> = ({
 }) => (
 	<select
 		id={id}
+		name={id}
 		value={value}
 		onChange={(e) => onChange(e.target.value)}
 		autoComplete={autoComplete}
@@ -107,6 +108,7 @@ export const FormInput: FC<FormInputProps> = ({
 		{Icon && <Icon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />}
 		<Input
 			id={id}
+			name={id}
 			type={type}
 			placeholder={placeholder}
 			value={value}
