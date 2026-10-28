@@ -7,7 +7,7 @@ import xss from "xss";
 
 import { executePublicGraphQL } from "@/lib/graphql";
 import { ProductDetailsDocument, type ProductDetailsQuery } from "@/gql/graphql";
-import { buildPageMetadata, buildProductJsonLd } from "@/lib/seo";
+import { buildPageMetadata, buildProductJsonLd, seoTitle } from "@/lib/seo";
 import { CACHE_PROFILES, applyCacheProfile } from "@/lib/cache-manifest";
 import { Breadcrumbs } from "@/ui/components/breadcrumbs";
 import {
@@ -53,7 +53,7 @@ export async function generateMetadata(props: {
 	const product = await getProductData(params.slug, params.channel);
 
 	if (!product) {
-		return { title: "Product Not Found" };
+		return { title: seoTitle("Product Not Found") };
 	}
 
 	const description = product.seoDescription || product.name;

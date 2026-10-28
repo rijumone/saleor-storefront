@@ -5,9 +5,10 @@ import { DeleteLineButton } from "./delete-line-button";
 import * as Checkout from "@/lib/checkout";
 import { formatMoney, getHrefForVariant } from "@/lib/utils";
 import { LinkWithChannel } from "@/ui/atoms/link-with-channel";
+import { seoTitle } from "@/lib/seo";
 
 export const metadata = {
-	title: "Shopping Cart · Rijuvenation",
+	title: seoTitle("Shopping Cart"),
 };
 
 export default function Page(props: { params: Promise<{ channel: string }> }) {

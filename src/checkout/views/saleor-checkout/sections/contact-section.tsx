@@ -1,9 +1,14 @@
 "use client";
 
 import { type FC } from "react";
-import { Label } from "@/ui/components/ui/label";
-import { Checkbox } from "@/ui/components/ui/checkbox";
 import { SignedInUser, GuestContact } from "@/checkout/components/contact";
+
+// Newsletter opt-in is disabled while the store has no newsletter.
+// To restore, uncomment these imports, the two props in ContactSectionProps,
+// the two destructured parameters, and the JSX block at the end of the
+// component.
+// import { Label } from "@/ui/components/ui/label";
+// import { Checkbox } from "@/ui/components/ui/checkbox";
 
 // User type matching what useUser() returns
 type User = {
@@ -37,9 +42,9 @@ interface ContactSectionProps {
 	onPasswordChange: (value: string) => void;
 	passwordError?: string;
 
-	// Subscribe state (guests)
-	subscribeNews: boolean;
-	onSubscribeChange: (value: boolean) => void;
+	// Subscribe state (guests) - disabled while the store has no newsletter.
+	// subscribeNews: boolean;
+	// onSubscribeChange: (value: boolean) => void;
 }
 
 // =============================================================================
@@ -60,8 +65,9 @@ export const ContactSection: FC<ContactSectionProps> = ({
 	password,
 	onPasswordChange,
 	passwordError,
-	subscribeNews,
-	onSubscribeChange,
+	// Newsletter opt-in (disabled).
+	// subscribeNews,
+	// onSubscribeChange,
 }) => {
 	return (
 		<section className="space-y-4">
@@ -85,7 +91,9 @@ export const ContactSection: FC<ContactSectionProps> = ({
 						passwordError={passwordError}
 					/>
 
-					{/* Subscribe checkbox (only for guests not creating account) */}
+					{/* Newsletter opt-in is disabled while the store has no newsletter.
+					    To restore, uncomment this block and the commented code above.
+
 					{!createAccount && (
 						<div className="flex items-center gap-3">
 							<Checkbox
@@ -98,6 +106,8 @@ export const ContactSection: FC<ContactSectionProps> = ({
 							</Label>
 						</div>
 					)}
+
+					*/}
 				</>
 			)}
 		</section>

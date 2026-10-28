@@ -2,6 +2,29 @@ import { type Metadata } from "next";
 import { seoConfig, getMetadataBase } from "./config";
 
 /**
+ * Build a page title that contains the site name exactly once.
+ *
+ * Uses `title.absolute` on purpose. The root layout defines a `title.template`,
+ * but Next.js does not apply it to metadata that is resolved dynamically (PPR),
+ * so some routes lost the site name and others repeated it ("Men | Rijuvenation
+ * | Rijuvenation"). An absolute title is the same on every render.
+ *
+ * @example
+ * export const metadata = { title: seoTitle("Products") };
+ * // <title>Products | Rijuvenation</title>
+ *
+ * export const metadata = { title: seoTitle() };
+ * // <title>Rijuvenation</title>
+ */
+export function seoTitle(pageName?: string | null): Metadata["title"] {
+	const name = pageName?.trim();
+
+	return {
+		absolute: name ? `${name}${seoConfig.titleSeparator}${seoConfig.siteName}` : seoConfig.siteName,
+	};
+}
+
+/**
  * Root Metadata
  *
  * Default metadata for the entire site.
@@ -141,7 +164,7 @@ export function buildPageMetadata(options: {
 	const truncatedDescription = description ? truncateText(description, 155) : undefined;
 
 	return {
-		title: truncatedTitle,
+		title: seoTitle(truncatedTitle),
 		description: truncatedDescription,
 
 		// Canonical URL

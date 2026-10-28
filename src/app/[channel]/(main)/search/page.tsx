@@ -6,9 +6,10 @@ import { SearchResults } from "@/ui/components/search-results";
 import { Pagination } from "@/ui/components/pagination";
 import { SearchSort } from "./search-sort";
 import { SearchIcon } from "lucide-react";
+import { seoTitle } from "@/lib/seo";
 
 export const metadata = {
-	title: "Search products · Rijuvenation",
+	title: seoTitle("Search products"),
 	description: "Search products in Rijuvenation",
 };
 

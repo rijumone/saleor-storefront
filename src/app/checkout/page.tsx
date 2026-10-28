@@ -1,10 +1,11 @@
 import { Suspense } from "react";
 import { invariant } from "ts-invariant";
+import { seoTitle } from "@/lib/seo";
 import { RootWrapper } from "./page-wrapper";
 import { Loader } from "@/ui/atoms/loader";
 
 export const metadata = {
-	title: "Checkout · Rijuvenation",
+	title: seoTitle("Checkout"),
 	description: "Complete your purchase securely.",
 };
 

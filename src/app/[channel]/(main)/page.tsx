@@ -2,10 +2,11 @@ import { Suspense } from "react";
 import { ProductListByCollectionDocument, ProductOrderField, OrderDirection } from "@/gql/graphql";
 import { executePublicGraphQL } from "@/lib/graphql";
 import { CACHE_PROFILES, applyCacheProfile } from "@/lib/cache-manifest";
+import { seoTitle } from "@/lib/seo";
 import { ProductList } from "@/ui/components/product-list";
 
 export const metadata = {
-	title: "Rijuvenation",
+	title: seoTitle(),
 	description: "Rijuvenation - fusion of design and comfort",
 };
 

@@ -70,7 +70,8 @@ export const InformationStep: FC<InformationStepProps> = ({ checkout, onNext }) 
 	const [email, setEmail] = useState(checkout.email || "");
 	const [createAccount, setCreateAccount] = useState(false);
 	const [accountPassword, setAccountPassword] = useState("");
-	const [subscribeNews, setSubscribeNews] = useState(false);
+	// Newsletter opt-in is disabled while the store has no newsletter.
+	// const [subscribeNews, setSubscribeNews] = useState(false);
 
 	// ----- Address form state (for guests/new address) -----
 	const [countryCode, setCountryCode] = useState<CountryCode>(defaultCountry);
@@ -447,8 +448,9 @@ export const InformationStep: FC<InformationStepProps> = ({ checkout, onNext }) 
 				password={accountPassword}
 				onPasswordChange={setAccountPassword}
 				passwordError={errors.password}
-				subscribeNews={subscribeNews}
-				onSubscribeChange={setSubscribeNews}
+				// Newsletter opt-in is disabled while the store has no newsletter.
+				// subscribeNews={subscribeNews}
+				// onSubscribeChange={setSubscribeNews}
 			/>
 
 			{checkout.isShippingRequired && (

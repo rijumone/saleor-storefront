@@ -6,7 +6,8 @@ import { brandConfig } from "@/config/brand";
 import { Logo } from "@/ui/components/shared/logo";
 
 export const metadata = {
-	title: brandConfig.siteName,
+	// Absolute so the root title template cannot repeat the site name.
+	title: { absolute: brandConfig.siteName },
 	description: brandConfig.description,
 };
 

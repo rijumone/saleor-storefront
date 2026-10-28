@@ -4,6 +4,7 @@ import edjsHTML from "editorjs-html";
 import xss from "xss";
 import { PageGetBySlugDocument } from "@/gql/graphql";
 import { executePublicGraphQL } from "@/lib/graphql";
+import { seoTitle } from "@/lib/seo";
 
 const parser = edjsHTML();
 
@@ -17,7 +18,7 @@ export const generateMetadata = async (props: { params: Promise<{ slug: string }
 	const page = result.ok ? result.data.page : null;
 
 	return {
-		title: `${page?.seoTitle || page?.title || "Page"} · Rijuvenation`,
+		title: seoTitle(page?.seoTitle || page?.title || "Page"),
 		description: page?.seoDescription || page?.seoTitle || page?.title,
 	};
 };

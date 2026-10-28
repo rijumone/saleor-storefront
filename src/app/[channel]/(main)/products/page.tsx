@@ -6,10 +6,11 @@ import { getPaginatedListVariables } from "@/lib/utils";
 import { CategoryHero, transformToProductCard } from "@/ui/components/plp";
 import { buildSortVariables, buildFilterVariables } from "@/ui/components/plp/filter-utils";
 import { resolveCategorySlugsToIds } from "@/ui/components/plp/filter-utils.server";
+import { seoTitle } from "@/lib/seo";
 import { ProductsPageClient } from "./products-client";
 
 export const metadata = {
-	title: "Products · Rijuvenation",
+	title: seoTitle("Products"),
 	description: "All products in Rijuvenation",
 };
 

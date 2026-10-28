@@ -4,10 +4,11 @@ import { LoginForm } from "@/ui/components/login-form";
 import { AccountNav } from "@/ui/components/account/account-nav";
 import { AccountSkeleton } from "@/ui/components/account/account-skeleton";
 import { AccountProvider } from "@/ui/components/account/account-context";
+import { seoTitle } from "@/lib/seo";
 import { getCurrentUser } from "./get-current-user";
 
 export const metadata = {
-	title: "My Account",
+	title: seoTitle("My Account"),
 };
 
 export default function AccountLayout({ children }: { children: ReactNode }) {

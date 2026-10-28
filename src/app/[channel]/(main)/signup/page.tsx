@@ -1,8 +1,9 @@
 import { Suspense } from "react";
 import { SignUpForm } from "@/ui/components/sign-up-form";
+import { seoTitle } from "@/lib/seo";
 
 export const metadata = {
-	title: "Create Account",
+	title: seoTitle("Create Account"),
 	description: "Create a new account to save your addresses and order history.",
 };
 

@@ -5,9 +5,10 @@ import { LoginForm } from "@/ui/components/login-form";
 import { executeAuthenticatedGraphQL } from "@/lib/graphql";
 import { CurrentUserDocument } from "@/gql/graphql";
 import { AuthProvider } from "@/lib/auth";
+import { seoTitle } from "@/lib/seo";
 
 export const metadata = {
-	title: "Sign In",
+	title: seoTitle("Sign In"),
 	description: "Sign in to your account to access your orders and saved addresses.",
 };
 

@@ -1,9 +1,10 @@
 import { type ReactNode } from "react";
 import { AuthProvider } from "@/lib/auth";
-import { brandConfig, formatPageTitle } from "@/config/brand";
+import { brandConfig } from "@/config/brand";
+import { seoTitle } from "@/lib/seo";
 
 export const metadata = {
-	title: formatPageTitle("Checkout"),
+	title: seoTitle("Checkout"),
 	description: brandConfig.description,
 };
 

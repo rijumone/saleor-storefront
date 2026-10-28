@@ -1,11 +1,12 @@
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
-import { type ResolvingMetadata, type Metadata } from "next";
+import { type Metadata } from "next";
 import { ProductListByCollectionDocument, ProductOrderField, OrderDirection } from "@/gql/graphql";
 import { executePublicGraphQL } from "@/lib/graphql";
 import { CACHE_PROFILES, applyCacheProfile } from "@/lib/cache-manifest";
 import { getPaginatedListVariables } from "@/lib/utils";
 import { parseEditorJSToText } from "@/lib/editorjs";
+import { seoTitle } from "@/lib/seo";
 import { CategoryHero, transformToProductCard } from "@/ui/components/plp";
 import { buildSortVariables, buildFilterVariables } from "@/ui/components/plp/filter-utils";
 import { CollectionPageClient } from "./client";
@@ -39,13 +40,13 @@ type PageProps = {
 	}>;
 };
 
-export const generateMetadata = async (props: PageProps, parent: ResolvingMetadata): Promise<Metadata> => {
+export const generateMetadata = async (props: PageProps): Promise<Metadata> => {
 	const params = await props.params;
 	const collection = await getCollectionData(params.slug, params.channel);
 	const plainDescription = parseEditorJSToText(collection?.description);
 
 	return {
-		title: `${collection?.name || "Collection"} | ${collection?.seoTitle || (await parent).title?.absolute}`,
+		title: seoTitle(collection?.seoTitle || collection?.name || "Collection"),
 		description: collection?.seoDescription || plainDescription || collection?.seoTitle || collection?.name,
 	};
 };
