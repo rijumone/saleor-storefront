@@ -15,6 +15,7 @@ import {
 } from "@/checkout/graphql";
 import { useCheckout } from "@/checkout/hooks/use-checkout";
 import { useUser } from "@/checkout/hooks/use-user";
+import { useAvailableShippingCountries } from "@/checkout/hooks/use-available-shipping-countries";
 import { getAddressInputData } from "@/checkout/components/address-form/utils";
 // Dummy payment gateway ID (from Saleor Dummy Payment app)
 const dummyGatewayId = "mirumee.payments.dummy";
@@ -27,6 +28,7 @@ import { getStepNumber } from "./flow";
 import {
 	PaymentMethodSelector,
 	BillingAddressSection,
+	useBillingAddressValidation,
 	type PaymentMethodType,
 	type CardData,
 	type BillingAddressData,
@@ -34,6 +36,12 @@ import {
 } from "@/checkout/components/payment";
 import { LoadingSpinner } from "@/checkout/ui-kit/loading-spinner";
 import { formatMoneyWithFallback } from "@/checkout/lib/utils/money";
+
+/** Billing inputs are rendered with the "billing-" id prefix. */
+function focusBillingField(field: string) {
+	const element = document.querySelector(`[name="billing-${field}"]`) as HTMLElement | null;
+	element?.focus();
+}
 
 interface PaymentStepProps {
 	checkout: CheckoutFragment;
@@ -73,9 +81,20 @@ export const PaymentStep: FC<PaymentStepProps> = ({
 
 	// Billing address state
 	const [sameAsBilling, setSameAsBilling] = useState(isShippingRequired && hasShippingAddress);
+	const { availableShippingCountries } = useAvailableShippingCountries();
+
+	// The billing form takes its state list and postal-code label from this
+	// country, so it must follow the customer: an existing billing address wins,
+	// then the shipping address, then the store's first available country.
+	const defaultBillingCountry: CountryCode =
+		(checkout.billingAddress?.country?.code as CountryCode | undefined) ||
+		(checkout.shippingAddress?.country?.code as CountryCode | undefined) ||
+		availableShippingCountries[0] ||
+		"US";
+
 	// Lazy initialization - complex object only created once on mount
 	const [billingData, setBillingData] = useState<BillingAddressData>(() => ({
-		countryCode: (checkout.billingAddress?.country?.code as CountryCode) || "US",
+		countryCode: defaultBillingCountry,
 		formData: {
 			firstName: checkout.billingAddress?.firstName || "",
 			lastName: checkout.billingAddress?.lastName || "",
@@ -114,6 +133,9 @@ export const PaymentStep: FC<PaymentStepProps> = ({
 
 	const [isProcessing, setIsProcessing] = useState(false);
 	const [errors, setErrors] = useState<Record<string, string>>({});
+
+	// Same validation rules as the shipping address form.
+	const { validateBillingAddress } = useBillingAddressValidation(billingData.countryCode);
 
 	// Mutations
 	const [, updateBillingAddress] = useCheckoutBillingAddressUpdateMutation();
@@ -158,6 +180,19 @@ export const PaymentStep: FC<PaymentStepProps> = ({
 
 			// Validate billing address if different from shipping (or for digital products)
 			const needsBillingForm = !sameAsBilling || !hasShippingAddress;
+
+			// Same client-side validation as the shipping form, so both steps show
+			// the same messages instead of raw Saleor errors ("This field is required.").
+			if (needsBillingForm && !billingData.selectedAddressId) {
+				const billingErrors = validateBillingAddress(billingData.formData);
+				const firstField = Object.keys(billingErrors)[0];
+
+				if (firstField) {
+					setErrors(billingErrors);
+					focusBillingField(firstField);
+					return;
+				}
+			}
 
 			setIsProcessing(true);
 			try {
@@ -209,9 +244,7 @@ export const PaymentStep: FC<PaymentStepProps> = ({
 							errorMap[field] = err.message || "Invalid value";
 						});
 						setErrors(errorMap);
-						const firstField = Object.keys(errorMap)[0];
-						const element = document.querySelector(`[name="${firstField}"]`) as HTMLElement;
-						element?.focus();
+						focusBillingField(Object.keys(errorMap)[0] ?? "streetAddress1");
 						return;
 					}
 				} else if (shippingAddress) {
@@ -452,6 +485,7 @@ export const PaymentStep: FC<PaymentStepProps> = ({
 			sameAsBilling,
 			hasShippingAddress,
 			billingData,
+			validateBillingAddress,
 			user?.addresses,
 			shippingAddress,
 			checkout.id,
@@ -556,6 +590,7 @@ export const PaymentStep: FC<PaymentStepProps> = ({
 				onChange={handleBillingDataChange}
 				onSameAsShippingChange={setSameAsBilling}
 				initialSameAsShipping={sameAsBilling}
+				defaultCountryCode={defaultBillingCountry}
 			/>
 
 			{/* Payment/Checkout Error Display */}

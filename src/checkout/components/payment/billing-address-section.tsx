@@ -39,6 +39,12 @@ export interface BillingAddressSectionProps {
 	onSameAsShippingChange?: (sameAsShipping: boolean) => void;
 	/** Initial "same as shipping" state */
 	initialSameAsShipping?: boolean;
+	/**
+	 * Country used when there is no billing address yet. The payment step passes
+	 * the shipping country here, so the state list and postal-code label match
+	 * what the customer already entered.
+	 */
+	defaultCountryCode?: CountryCode;
 }
 
 /**
@@ -75,6 +81,7 @@ export const BillingAddressSection: FC<BillingAddressSectionProps> = ({
 	onChange,
 	onSameAsShippingChange,
 	initialSameAsShipping,
+	defaultCountryCode,
 }) => {
 	const { availableShippingCountries } = useAvailableShippingCountries();
 
@@ -95,7 +102,7 @@ export const BillingAddressSection: FC<BillingAddressSectionProps> = ({
 	);
 
 	const [countryCode, setCountryCode] = useState<CountryCode>(
-		(billingAddress?.country?.code as CountryCode) || "US",
+		(billingAddress?.country?.code as CountryCode) || defaultCountryCode || "IN",
 	);
 
 	const [formData, setFormData] = useState<Record<string, string>>({
