@@ -92,9 +92,9 @@ export function SetPasswordMode({ email, token }: Props) {
 						</div>
 						<h1 className="text-2xl font-semibold">Password Updated!</h1>
 						<p className="text-muted-foreground">
-							Your password has been successfully reset. You are now signed in.
+							Your password has been successfully reset. Please sign in with your new password.
 						</p>
-						<p className="text-sm text-muted-foreground">Redirecting you to the store…</p>
+						<p className="text-sm text-muted-foreground">Redirecting you to sign in…</p>
 					</div>
 				</div>
 			</div>

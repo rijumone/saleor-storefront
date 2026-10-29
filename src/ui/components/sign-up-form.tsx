@@ -58,7 +58,7 @@ export function SignUpForm() {
 					firstName,
 					lastName,
 					channel: params.channel,
-					redirectUrl: `${window.location.origin}/${params.channel}/login`,
+					redirectUrl: `${window.location.origin}/${params.channel}/confirm-email`,
 				}),
 			});
 
