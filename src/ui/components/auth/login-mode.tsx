@@ -8,6 +8,7 @@ import { useSaleorAuthContext } from "@saleor/auth-sdk/react";
 import { Button } from "@/ui/components/ui/button";
 import { Input } from "@/ui/components/ui/input";
 import { Label } from "@/ui/components/ui/label";
+import { usePasswordResetCooldown } from "@/lib/auth/use-password-reset-cooldown";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -23,6 +24,7 @@ export function LoginMode({ initialEmail = "" }: { initialEmail?: string }) {
 	const [error, setError] = useState("");
 	const [resetMessage, setResetMessage] = useState("");
 	const [resetEmailSent, setResetEmailSent] = useState(false);
+	const cooldown = usePasswordResetCooldown(params.channel, email);
 
 	const handleLogin = async (e: React.FormEvent) => {
 		e.preventDefault();
@@ -76,6 +78,11 @@ export function LoginMode({ initialEmail = "" }: { initialEmail?: string }) {
 			return;
 		}
 
+		if (cooldown.locked) {
+			return;
+		}
+
+		const requestedEmail = email;
 		setIsSubmitting(true);
 
 		try {
@@ -83,7 +90,7 @@ export function LoginMode({ initialEmail = "" }: { initialEmail?: string }) {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({
-					email,
+					email: requestedEmail,
 					channel: params.channel,
 					redirectUrl: `${window.location.origin}/${params.channel}/login`,
 				}),
@@ -100,8 +107,9 @@ export function LoginMode({ initialEmail = "" }: { initialEmail?: string }) {
 			}
 
 			setResetEmailSent(true);
+			cooldown.start(requestedEmail);
 			setResetMessage(
-				`If an account exists for ${email}, a password reset link has been sent. Note: You can only request one reset link every 15 minutes.`,
+				`If an account exists for ${requestedEmail}, a password reset link has been sent. You can request another link in 15 minutes.`,
 			);
 		} catch {
 			setError("An error occurred. Please try again.");
@@ -193,10 +201,15 @@ export function LoginMode({ initialEmail = "" }: { initialEmail?: string }) {
 						<button
 							type="button"
 							onClick={handleForgotPassword}
-							disabled={isSubmitting}
-							className="text-sm text-muted-foreground underline underline-offset-2 hover:text-foreground hover:no-underline disabled:opacity-50"
+							disabled={isSubmitting || cooldown.locked}
+							title={cooldown.locked ? "Please wait before requesting another reset link" : undefined}
+							className="text-sm text-muted-foreground underline underline-offset-2 hover:text-foreground hover:no-underline disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:no-underline"
 						>
-							{resetEmailSent ? "Resend link?" : "Forgot password?"}
+							{cooldown.locked && cooldown.label
+								? `Resend link in ${cooldown.label}`
+								: resetEmailSent
+									? "Resend link?"
+									: "Forgot password?"}
 						</button>
 					</div>
 

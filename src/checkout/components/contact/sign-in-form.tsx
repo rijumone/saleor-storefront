@@ -6,6 +6,7 @@ import { useSaleorAuthContext } from "@saleor/auth-sdk/react";
 import { Button } from "@/ui/components/ui/button";
 import { Input } from "@/ui/components/ui/input";
 import { useRequestPasswordResetMutation } from "@/checkout/graphql";
+import { usePasswordResetCooldown } from "@/lib/auth/use-password-reset-cooldown";
 
 export interface SignInFormProps {
 	/** Pre-filled email address */
@@ -42,6 +43,7 @@ export const SignInForm: FC<SignInFormProps> = ({
 	const [error, setError] = useState("");
 	const [successMessage, setSuccessMessage] = useState("");
 	const [passwordResetSent, setPasswordResetSent] = useState(false);
+	const cooldown = usePasswordResetCooldown(channelSlug, email);
 
 	const validateEmail = (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 
@@ -82,10 +84,15 @@ export const SignInForm: FC<SignInFormProps> = ({
 			return;
 		}
 
+		if (cooldown.locked) {
+			return;
+		}
+
+		const requestedEmail = email;
 		setIsSubmitting(true);
 		try {
 			const result = await requestPasswordReset({
-				email,
+				email: requestedEmail,
 				channel: channelSlug,
 				redirectUrl: window.location.href,
 			});
@@ -100,9 +107,10 @@ export const SignInForm: FC<SignInFormProps> = ({
 				setError(err.message || "Failed to send reset link");
 			} else {
 				setPasswordResetSent(true);
+				cooldown.start(requestedEmail);
 				setSuccessMessage(
-					`If an account exists for ${email}, a password reset link has been sent. ` +
-						`Note: You can only request one reset link every 15 minutes.`,
+					`If an account exists for ${requestedEmail}, a password reset link has been sent. ` +
+						`You can request another link in 15 minutes.`,
 				);
 			}
 		} catch {
@@ -131,7 +139,9 @@ export const SignInForm: FC<SignInFormProps> = ({
 			{error && <div className="bg-destructive/10 rounded-md p-3 text-sm text-destructive">{error}</div>}
 
 			{successMessage && (
-				<div className="rounded-md bg-green-100 p-3 text-sm text-green-800">{successMessage}</div>
+				<div role="status" className="rounded-md bg-green-100 p-3 text-sm text-green-800">
+					{successMessage}
+				</div>
 			)}
 
 			<div className="space-y-1.5">
@@ -178,10 +188,15 @@ export const SignInForm: FC<SignInFormProps> = ({
 				<button
 					type="button"
 					onClick={handleForgotPassword}
-					disabled={isSubmitting}
-					className="text-sm text-muted-foreground underline underline-offset-2 hover:text-foreground hover:no-underline disabled:opacity-50"
+					disabled={isSubmitting || cooldown.locked}
+					title={cooldown.locked ? "Please wait before requesting another reset link" : undefined}
+					className="text-sm text-muted-foreground underline underline-offset-2 hover:text-foreground hover:no-underline disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:no-underline"
 				>
-					{passwordResetSent ? "Resend link?" : "Forgot password?"}
+					{cooldown.locked && cooldown.label
+						? `Resend link in ${cooldown.label}`
+						: passwordResetSent
+							? "Resend link?"
+							: "Forgot password?"}
 				</button>
 				<Button type="submit" disabled={isSubmitting}>
 					{isSubmitting ? "Processing..." : "Sign in"}
