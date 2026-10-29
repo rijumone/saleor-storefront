@@ -153,7 +153,7 @@ export default async function OrderDetailPage({ params }: Props) {
 					)}
 
 					<LinkWithChannel
-						href="/contact"
+						href="/pages/contact"
 						className="hover:bg-secondary/50 block w-full rounded-xl border px-5 py-3 text-center text-sm font-medium transition-colors"
 					>
 						Need Help?
