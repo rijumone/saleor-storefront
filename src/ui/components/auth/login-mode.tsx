@@ -11,12 +11,12 @@ import { Label } from "@/ui/components/ui/label";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-export function LoginMode() {
+export function LoginMode({ initialEmail = "" }: { initialEmail?: string }) {
 	const router = useRouter();
 	const params = useParams<{ channel: string }>();
 	const { signIn } = useSaleorAuthContext();
 
-	const [email, setEmail] = useState("");
+	const [email, setEmail] = useState(initialEmail);
 	const [password, setPassword] = useState("");
 	const [showPassword, setShowPassword] = useState(false);
 	const [isSubmitting, setIsSubmitting] = useState(false);
