@@ -13,6 +13,8 @@ interface CategoryPageClientProps {
 		endCursor?: string | null;
 	};
 	totalCount?: number;
+	/** Channel currency for price-range buckets and labels */
+	currency: string;
 }
 
 function PaginationSkeleton() {
@@ -24,7 +26,7 @@ function PaginationSkeleton() {
 	);
 }
 
-export function CategoryPageClient({ products, pageInfo }: CategoryPageClientProps) {
+export function CategoryPageClient({ products, pageInfo, currency }: CategoryPageClientProps) {
 	const {
 		filteredProducts,
 		colorOptions,
@@ -41,7 +43,7 @@ export function CategoryPageClient({ products, pageInfo }: CategoryPageClientPro
 		handleSortChange,
 		handleRemoveFilter,
 		handleClearFilters,
-	} = useProductFilters({ products });
+	} = useProductFilters({ products, currency });
 
 	return (
 		<>

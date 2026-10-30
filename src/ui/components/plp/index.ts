@@ -22,10 +22,10 @@ export {
 	filterProducts,
 	sortProductsClientSide,
 	buildActiveFilters,
-	// Constants
-	STATIC_PRICE_RANGES,
-	STATIC_PRICE_RANGES_WITH_COUNT,
+	// Price ranges (currency-aware, used for server-side price filtering)
+	getPriceRanges,
 	// Types
 	type CategoryOption,
+	type PriceRange,
 } from "./filter-utils";
 export { useProductFilters } from "./use-product-filters";

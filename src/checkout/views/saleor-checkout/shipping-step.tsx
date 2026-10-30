@@ -28,10 +28,20 @@ export const ShippingStep: FC<ShippingStepProps> = ({ checkout: initialCheckout,
 	const currentMethod = checkout.deliveryMethod;
 	const currentMethodId = currentMethod?.__typename === "ShippingMethod" ? currentMethod.id : undefined;
 
-	// Local state - only saves on Continue
-	const [selectedMethod, setSelectedMethod] = useState(currentMethodId || shippingMethods[0]?.id);
+	// Local state - only saves on Continue.
+	// Do not seed this from `shippingMethods`: on entry from the information step the
+	// checkout query is still refetching, so the first render sees no methods and the
+	// selection would stay empty forever. The effective selection is derived below.
+	const [pickedMethod, setPickedMethod] = useState<string | undefined>(undefined);
 	const [isSubmittingLocal, setIsSubmittingLocal] = useState(false);
 	const [error, setError] = useState<string | null>(null);
+
+	// Derive the selection on every render:
+	// user pick (while it is still offered) > saved delivery method > first available method.
+	const pickedMethodIsAvailable =
+		!!pickedMethod && shippingMethods.some((method) => method.id === pickedMethod);
+	const selectedMethod =
+		(pickedMethodIsAvailable ? pickedMethod : undefined) ?? currentMethodId ?? shippingMethods[0]?.id;
 
 	// Mutation
 	const [, updateDeliveryMethod] = useCheckoutDeliveryMethodUpdateMutation();
@@ -148,7 +158,7 @@ export const ShippingStep: FC<ShippingStepProps> = ({ checkout: initialCheckout,
 										value={method.id}
 										checked={isSelected}
 										onChange={() => {
-											setSelectedMethod(method.id);
+											setPickedMethod(method.id);
 											setError(null);
 										}}
 										className="sr-only"
@@ -197,7 +207,7 @@ export const ShippingStep: FC<ShippingStepProps> = ({ checkout: initialCheckout,
 				</button>
 				<Button
 					type="submit"
-					disabled={!selectedMethod || isSubmittingLocal}
+					disabled={!selectedMethod || isSubmittingLocal || fetching}
 					className="hidden h-12 px-8 md:flex"
 				>
 					{buttonText}
@@ -210,7 +220,7 @@ export const ShippingStep: FC<ShippingStepProps> = ({ checkout: initialCheckout,
 				type="submit"
 				onAction={handleSubmit}
 				isLoading={isSubmittingLocal}
-				disabled={!selectedMethod}
+				disabled={!selectedMethod || fetching}
 				loadingText="Saving..."
 			/>
 		</form>

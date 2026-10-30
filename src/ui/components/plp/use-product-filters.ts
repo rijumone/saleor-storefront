@@ -2,17 +2,19 @@
 
 import { useCallback, useMemo } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
+import { localeConfig } from "@/config/locale";
 import type { SortOption, ActiveFilter } from "./filter-bar";
 import type { ProductCardData } from "./product-card";
 import {
 	extractColorOptions,
 	extractSizeOptions,
 	extractCategoryOptions,
-	STATIC_PRICE_RANGES_WITH_COUNT,
+	getPriceRanges,
 	filterProducts,
 	buildActiveFilters,
 	sortProductsClientSide,
 	type CategoryOption,
+	type PriceRange,
 } from "./filter-utils";
 
 interface UseProductFiltersOptions {
@@ -21,6 +23,11 @@ interface UseProductFiltersOptions {
 	resolvedCategories?: Array<{ slug: string; id: string; name: string }>;
 	/** Whether to include category filter (only for /products page) */
 	enableCategoryFilter?: boolean;
+	/**
+	 * Channel currency used for price-range buckets and labels.
+	 * Saleor applies `ProductFilterInput.price` in the channel currency.
+	 */
+	currency?: string;
 }
 
 interface UseProductFiltersResult {
@@ -31,7 +38,7 @@ interface UseProductFiltersResult {
 	categoryOptions: CategoryOption[];
 	colorOptions: Array<{ name: string; count: number; hex?: string }>;
 	sizeOptions: Array<{ name: string; count: number }>;
-	priceRanges: typeof STATIC_PRICE_RANGES_WITH_COUNT;
+	priceRanges: PriceRange[];
 
 	// Selected filter values
 	selectedCategories: string[];
@@ -64,7 +71,10 @@ export function useProductFilters({
 	products,
 	resolvedCategories = [],
 	enableCategoryFilter = false,
+	currency: currencyOption,
 }: UseProductFiltersOptions): UseProductFiltersResult {
+	// The filtered product list can be empty; fall back to any price we can see.
+	const currency = currencyOption ?? products[0]?.currency ?? localeConfig.fallbackCurrency;
 	const router = useRouter();
 	const pathname = usePathname();
 	const searchParams = useSearchParams();
@@ -224,6 +234,9 @@ export function useProductFilters({
 	);
 	const sizeOptions = useMemo(() => extractSizeOptions(products, selectedSizes), [products, selectedSizes]);
 
+	// Price ranges are server-side filters and must match the channel currency.
+	const priceRanges = useMemo(() => getPriceRanges(currency), [currency]);
+
 	// Apply client-side filters (colors, sizes only)
 	const clientFilteredProducts = useMemo(
 		() =>
@@ -242,11 +255,14 @@ export function useProductFilters({
 
 	// Build active filters for display
 	const activeFilters = useMemo(() => {
-		const filters = buildActiveFilters({
-			colors: selectedColors,
-			sizes: selectedSizes,
-			priceRange: selectedPriceRange,
-		});
+		const filters = buildActiveFilters(
+			{
+				colors: selectedColors,
+				sizes: selectedSizes,
+				priceRange: selectedPriceRange,
+			},
+			currency,
+		);
 
 		// Add category filters from server-resolved data
 		resolvedCategories.forEach((cat) => {
@@ -254,14 +270,14 @@ export function useProductFilters({
 		});
 
 		return filters;
-	}, [selectedColors, selectedSizes, selectedPriceRange, resolvedCategories]);
+	}, [selectedColors, selectedSizes, selectedPriceRange, resolvedCategories, currency]);
 
 	return {
 		filteredProducts,
 		categoryOptions,
 		colorOptions,
 		sizeOptions,
-		priceRanges: STATIC_PRICE_RANGES_WITH_COUNT,
+		priceRanges,
 		selectedCategories,
 		selectedColors,
 		selectedSizes,

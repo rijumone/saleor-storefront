@@ -2,6 +2,7 @@
 
 export {
 	PaymentMethodSelector,
+	DEFAULT_PAYMENT_METHODS,
 	isCardDataValid,
 	type PaymentMethodType,
 	type CardData,

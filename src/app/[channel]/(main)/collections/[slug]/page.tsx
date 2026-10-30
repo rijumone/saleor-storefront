@@ -9,6 +9,7 @@ import { parseEditorJSToText } from "@/lib/editorjs";
 import { seoTitle } from "@/lib/seo";
 import { CategoryHero, transformToProductCard } from "@/ui/components/plp";
 import { buildSortVariables, buildFilterVariables } from "@/ui/components/plp/filter-utils";
+import { getChannelCurrency } from "@/lib/channel-currency";
 import { CollectionPageClient } from "./client";
 
 async function getCollectionData(slug: string, channel: string) {
@@ -132,11 +133,16 @@ async function CollectionProducts({
 
 	const productCards = products.edges.map((e) => transformToProductCard(e.node, params.channel));
 
+	// Price filters are evaluated in the channel currency. Take it from the products
+	// when there are any; a filtered-empty page resolves it from the channel instead.
+	const currency = productCards[0]?.currency ?? (await getChannelCurrency(params.channel));
+
 	return (
 		<CollectionPageClient
 			products={productCards}
 			pageInfo={products.pageInfo}
 			totalCount={products.totalCount ?? productCards.length}
+			currency={currency}
 		/>
 	);
 }

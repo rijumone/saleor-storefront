@@ -13,6 +13,7 @@
  */
 
 import type { ProductOrder, ProductOrderField, OrderDirection, ProductFilterInput } from "@/gql/graphql";
+import { localeConfig } from "@/config/locale";
 import { compareSizes } from "@/lib/sizes";
 import type { ProductCardData } from "./product-card";
 import type { FilterOption, ActiveFilter, SortOption } from "./filter-bar";
@@ -32,15 +33,53 @@ export interface CategoryOption {
 // Static Price Ranges (for server-side filtering)
 // ============================================================================
 
-export const STATIC_PRICE_RANGES = [
-	{ label: "Under $50", value: "0-50" },
-	{ label: "$50 - $100", value: "50-100" },
-	{ label: "$100 - $200", value: "100-200" },
-	{ label: "$200+", value: "200-" },
-] as const;
+export interface PriceRange {
+	label: string;
+	value: string;
+	count: number;
+}
 
-/** Price ranges with count=0 for FilterBar compatibility */
-export const STATIC_PRICE_RANGES_WITH_COUNT = STATIC_PRICE_RANGES.map((r) => ({ ...r, count: 0 }));
+/**
+ * Price bucket boundaries per currency, in the same units Saleor returns.
+ *
+ * `ProductFilterInput.price` is evaluated in the CHANNEL currency, so the
+ * boundaries must be in that currency too: a ₹899 product is out of range for
+ * an "Under $50" bucket that sends `gte: 0, lte: 50`.
+ */
+const PRICE_BUCKETS: Record<string, readonly [number, number, number]> = {
+	INR: [1000, 2500, 5000],
+	USD: [50, 100, 200],
+	EUR: [50, 100, 200],
+	GBP: [50, 100, 200],
+};
+
+const FALLBACK_PRICE_BUCKETS = PRICE_BUCKETS.USD;
+
+/** Currency label without trailing decimals: "₹1,000", "$50". */
+function formatBucket(amount: number, currency: string): string {
+	return new Intl.NumberFormat(localeConfig.default, {
+		style: "currency",
+		currency,
+		maximumFractionDigits: 0,
+	}).format(amount);
+}
+
+/**
+ * Build the price ranges shown in the filter bar for a currency.
+ * Labels are formatted in that currency; values are the `min-max` URL strings
+ * consumed by `buildFilterVariables`.
+ */
+export function getPriceRanges(currency: string): PriceRange[] {
+	const [low, mid, high] = PRICE_BUCKETS[currency] ?? FALLBACK_PRICE_BUCKETS;
+	const format = (amount: number) => formatBucket(amount, currency);
+
+	return [
+		{ label: `Under ${format(low)}`, value: `0-${low}`, count: 0 },
+		{ label: `${format(low)} - ${format(mid)}`, value: `${low}-${mid}`, count: 0 },
+		{ label: `${format(mid)} - ${format(high)}`, value: `${mid}-${high}`, count: 0 },
+		{ label: `${format(high)}+`, value: `${high}-`, count: 0 },
+	];
+}
 
 // ============================================================================
 // Server-side: Saleor GraphQL Filters
@@ -227,11 +266,14 @@ export function sortProductsClientSide<T extends { price: number; createdAt?: st
  * Build active filters array for display.
  * Note: Categories are added separately from resolved server data.
  */
-export function buildActiveFilters(filters: {
-	colors?: string[];
-	sizes?: string[];
-	priceRange?: string | null;
-}): ActiveFilter[] {
+export function buildActiveFilters(
+	filters: {
+		colors?: string[];
+		sizes?: string[];
+		priceRange?: string | null;
+	},
+	currency: string = localeConfig.fallbackCurrency,
+): ActiveFilter[] {
 	const active: ActiveFilter[] = [];
 
 	filters.colors?.forEach((color) => {
@@ -244,7 +286,9 @@ export function buildActiveFilters(filters: {
 
 	if (filters.priceRange) {
 		const [min, max] = filters.priceRange.split("-");
-		const label = max ? `$${min} - $${max}` : `$${min}+`;
+		const label = max
+			? `${formatBucket(Number(min), currency)} - ${formatBucket(Number(max), currency)}`
+			: `${formatBucket(Number(min), currency)}+`;
 		active.push({ key: "price", label: "Price", value: label });
 	}
 

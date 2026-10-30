@@ -7,6 +7,15 @@ import { cn } from "@/lib/utils";
 
 export type PaymentMethodType = "card" | "paypal" | "ideal" | "razorpay";
 
+/**
+ * Payment methods this checkout offers, in display order.
+ *
+ * Single source of truth: the step seeds its selected method from this list and
+ * passes the same list to the selector, so the default can never point at a
+ * method that is not rendered.
+ */
+export const DEFAULT_PAYMENT_METHODS: PaymentMethodType[] = ["razorpay"];
+
 export interface CardData {
 	cardNumber: string;
 	expiry: string;
@@ -55,12 +64,7 @@ export const PaymentMethodSelector: FC<PaymentMethodSelectorProps> = ({
 	onChange,
 	cardData,
 	onCardDataChange,
-	availableMethods = [
-		// "card",
-		"razorpay",
-		// "paypal",
-		// "ideal",
-	],
+	availableMethods = DEFAULT_PAYMENT_METHODS,
 }) => {
 	// Local card state if not controlled
 	const [localCardData, setLocalCardData] = useState<CardData>({

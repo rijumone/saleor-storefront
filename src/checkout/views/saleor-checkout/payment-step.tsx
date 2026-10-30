@@ -27,6 +27,7 @@ import { getStepNumber } from "./flow";
 // Extracted reusable components
 import {
 	PaymentMethodSelector,
+	DEFAULT_PAYMENT_METHODS,
 	BillingAddressSection,
 	useBillingAddressValidation,
 	type PaymentMethodType,
@@ -69,8 +70,9 @@ export const PaymentStep: FC<PaymentStepProps> = ({
 	const isShippingRequired = checkout.isShippingRequired;
 	const hasShippingAddress = !!checkout.shippingAddress;
 
-	// Payment method state
-	const [paymentMethod, setPaymentMethod] = useState<PaymentMethodType>("card");
+	// Payment method state - seeded from the methods the selector actually renders,
+	// otherwise no radio is selected and the Pay button stays disabled.
+	const [paymentMethod, setPaymentMethod] = useState<PaymentMethodType>(DEFAULT_PAYMENT_METHODS[0]);
 	// Lazy initialization - object only created once on mount
 	const [cardData, setCardData] = useState<CardData>(() => ({
 		cardNumber: "",
@@ -574,6 +576,7 @@ export const PaymentStep: FC<PaymentStepProps> = ({
 				<PaymentMethodSelector
 					value={paymentMethod}
 					onChange={setPaymentMethod}
+					availableMethods={DEFAULT_PAYMENT_METHODS}
 					cardData={cardData}
 					onCardDataChange={setCardData}
 				/>

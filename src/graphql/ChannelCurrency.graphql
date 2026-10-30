@@ -1,0 +1,17 @@
+query ChannelCurrency($channel: String!) {
+	products(first: 1, channel: $channel) {
+		edges {
+			node {
+				pricing {
+					priceRange {
+						start {
+							gross {
+								currency
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}

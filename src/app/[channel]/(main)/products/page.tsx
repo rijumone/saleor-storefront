@@ -6,6 +6,7 @@ import { getPaginatedListVariables } from "@/lib/utils";
 import { CategoryHero, transformToProductCard } from "@/ui/components/plp";
 import { buildSortVariables, buildFilterVariables } from "@/ui/components/plp/filter-utils";
 import { resolveCategorySlugsToIds } from "@/ui/components/plp/filter-utils.server";
+import { getChannelCurrency } from "@/lib/channel-currency";
 import { seoTitle } from "@/lib/seo";
 import { ProductsPageClient } from "./products-client";
 
@@ -97,6 +98,10 @@ async function ProductsContent({
 	const products = result.data.products;
 	const productCards = products.edges.map((e) => transformToProductCard(e.node, params.channel));
 
+	// Price filters are evaluated in the channel currency. Take it from the products
+	// when there are any; a filtered-empty page resolves it from the channel instead.
+	const currency = productCards[0]?.currency ?? (await getChannelCurrency(params.channel));
+
 	// Build resolved categories array for the client (for active filter display)
 	const resolvedCategories = categorySlugs
 		.map((slug) => {
@@ -111,6 +116,7 @@ async function ProductsContent({
 			pageInfo={products.pageInfo}
 			totalCount={products.totalCount ?? productCards.length}
 			resolvedCategories={resolvedCategories}
+			currency={currency}
 		/>
 	);
 }

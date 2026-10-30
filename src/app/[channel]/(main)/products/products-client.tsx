@@ -15,6 +15,8 @@ interface ProductsPageClientProps {
 	totalCount?: number;
 	/** Categories resolved from URL slugs (server-side) for active filter display */
 	resolvedCategories?: Array<{ slug: string; id: string; name: string }>;
+	/** Channel currency for price-range buckets and labels */
+	currency: string;
 }
 
 function PaginationSkeleton() {
@@ -26,7 +28,12 @@ function PaginationSkeleton() {
 	);
 }
 
-export function ProductsPageClient({ products, pageInfo, resolvedCategories = [] }: ProductsPageClientProps) {
+export function ProductsPageClient({
+	products,
+	pageInfo,
+	resolvedCategories = [],
+	currency,
+}: ProductsPageClientProps) {
 	const {
 		filteredProducts,
 		categoryOptions,
@@ -50,6 +57,7 @@ export function ProductsPageClient({ products, pageInfo, resolvedCategories = []
 		products,
 		resolvedCategories,
 		enableCategoryFilter: true,
+		currency,
 	});
 
 	return (

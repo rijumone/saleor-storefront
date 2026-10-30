@@ -14,8 +14,7 @@ import {
 	filterProducts,
 	sortProductsClientSide,
 	buildActiveFilters,
-	STATIC_PRICE_RANGES,
-	STATIC_PRICE_RANGES_WITH_COUNT,
+	getPriceRanges,
 } from "./filter-utils";
 import {
 	sampleProducts,
@@ -359,15 +358,21 @@ describe("buildActiveFilters", () => {
 	});
 
 	it("builds price range filter with range", () => {
-		const result = buildActiveFilters({ priceRange: "50-100" });
+		const result = buildActiveFilters({ priceRange: "50-100" }, "USD");
 
 		expect(result).toEqual([{ key: "price", label: "Price", value: "$50 - $100" }]);
 	});
 
 	it("builds price range filter with open-ended max", () => {
-		const result = buildActiveFilters({ priceRange: "200-" });
+		const result = buildActiveFilters({ priceRange: "200-" }, "USD");
 
 		expect(result).toEqual([{ key: "price", label: "Price", value: "$200+" }]);
+	});
+
+	it("labels the price range in the given currency", () => {
+		const result = buildActiveFilters({ priceRange: "0-1000" }, "INR");
+
+		expect(result).toEqual([{ key: "price", label: "Price", value: "₹0 - ₹1,000" }]);
 	});
 
 	it("combines all filter types", () => {
@@ -383,23 +388,27 @@ describe("buildActiveFilters", () => {
 });
 
 // =============================================================================
-// Static Price Ranges
+// Price Ranges
 // =============================================================================
-describe("STATIC_PRICE_RANGES", () => {
+describe("getPriceRanges", () => {
 	it("has 4 price ranges", () => {
-		expect(STATIC_PRICE_RANGES).toHaveLength(4);
+		expect(getPriceRanges("USD")).toHaveLength(4);
 	});
 
-	it("has correct format", () => {
-		expect(STATIC_PRICE_RANGES[0]).toEqual({ label: "Under $50", value: "0-50" });
-		expect(STATIC_PRICE_RANGES[3]).toEqual({ label: "$200+", value: "200-" });
+	it("uses USD buckets and labels for USD", () => {
+		expect(getPriceRanges("USD")[0]).toEqual({ label: "Under $50", value: "0-50", count: 0 });
+		expect(getPriceRanges("USD")[3]).toEqual({ label: "$200+", value: "200-", count: 0 });
 	});
 
-	it("STATIC_PRICE_RANGES_WITH_COUNT adds count: 0", () => {
-		expect(STATIC_PRICE_RANGES_WITH_COUNT[0]).toEqual({
-			label: "Under $50",
-			value: "0-50",
-			count: 0,
-		});
+	it("uses INR buckets and labels for INR", () => {
+		const ranges = getPriceRanges("INR");
+
+		expect(ranges.map((r) => r.value)).toEqual(["0-1000", "1000-2500", "2500-5000", "5000-"]);
+		expect(ranges[0]).toEqual({ label: "Under ₹1,000", value: "0-1000", count: 0 });
+		expect(ranges[3]).toEqual({ label: "₹5,000+", value: "5000-", count: 0 });
+	});
+
+	it("falls back to USD buckets for an unknown currency", () => {
+		expect(getPriceRanges("XXX")[0]?.value).toBe("0-50");
 	});
 });
