@@ -2,6 +2,7 @@ import { type ReactNode, Suspense } from "react";
 import { Footer } from "@/ui/components/footer";
 import { Header } from "@/ui/components/header";
 import { CartProvider, CartDrawerWrapper } from "@/ui/components/cart";
+import { ChannelProvider } from "@/ui/atoms/channel-context";
 import { brandConfig } from "@/config/brand";
 import { Logo } from "@/ui/components/shared/logo";
 
@@ -82,21 +83,23 @@ export default async function RootLayout(props: {
 	const channel = (await props.params).channel;
 
 	return (
-		<CartProvider>
-			<Suspense fallback={<HeaderSkeleton />}>
-				<Header channel={channel} />
-			</Suspense>
-			<div className="flex min-h-[calc(100dvh-64px)] flex-col">
-				<main className="flex-1">
-					<Suspense fallback={null}>{props.children}</Suspense>
-				</main>
-				<Suspense fallback={<FooterSkeleton />}>
-					<Footer channel={channel} />
+		<ChannelProvider channel={channel}>
+			<CartProvider>
+				<Suspense fallback={<HeaderSkeleton />}>
+					<Header channel={channel} />
 				</Suspense>
-			</div>
-			<Suspense fallback={null}>
-				<CartDrawerWrapper channel={channel} />
-			</Suspense>
-		</CartProvider>
+				<div className="flex min-h-[calc(100dvh-64px)] flex-col">
+					<main className="flex-1">
+						<Suspense fallback={null}>{props.children}</Suspense>
+					</main>
+					<Suspense fallback={<FooterSkeleton />}>
+						<Footer channel={channel} />
+					</Suspense>
+				</div>
+				<Suspense fallback={null}>
+					<CartDrawerWrapper channel={channel} />
+				</Suspense>
+			</CartProvider>
+		</ChannelProvider>
 	);
 }

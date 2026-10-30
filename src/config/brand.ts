@@ -58,7 +58,9 @@ export function formatPageTitle(title: string): string {
 
 /**
  * Get copyright text with specified year.
- * Use CopyrightText component for dynamic year in Server Components.
+ * Pass an explicit year when calling from a client component: computing the year
+ * during render (server vs first client render) caused a hydration mismatch and
+ * made React discard and re-render the page. See CopyrightText.
  */
 export function getCopyrightText(year: number = new Date().getFullYear()): string {
 	return `© ${year} ${brandConfig.copyrightHolder}. All rights reserved.`;
