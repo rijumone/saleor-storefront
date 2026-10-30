@@ -31,7 +31,7 @@ import { createQueryString } from "@/checkout/lib/utils/url";
 export const SaleorCheckout: FC = () => {
 	const router = useRouter();
 	const searchParams = useSearchParams();
-	const { checkout, fetching: fetchingCheckout, hasCheckoutId } = useCheckout();
+	const { checkout, fetching: fetchingCheckout, hasCheckoutId, refetch } = useCheckout();
 	const { loading: isAuthenticating } = useUser();
 
 	// Auto-attach logged-in user to checkout (runs once, persists across step changes)
@@ -51,6 +51,29 @@ export const SaleorCheckout: FC = () => {
 		window.scrollTo({ top: 0, behavior: "instant" });
 		stepRef.current?.focus();
 	}, [currentStep.id]);
+
+	// Revalidate when the page is restored from the back/forward cache or the tab
+	// becomes visible again, so the checkout never shows a cart snapshot from
+	// before the user added or removed items.
+	useEffect(() => {
+		const refresh = () => {
+			void refetch();
+		};
+		const onPageShow = (event: PageTransitionEvent) => {
+			if (event.persisted) refresh();
+		};
+		const onVisibilityChange = () => {
+			if (document.visibilityState === "visible") refresh();
+		};
+
+		window.addEventListener("pageshow", onPageShow);
+		document.addEventListener("visibilitychange", onVisibilityChange);
+
+		return () => {
+			window.removeEventListener("pageshow", onPageShow);
+			document.removeEventListener("visibilitychange", onVisibilityChange);
+		};
+	}, [refetch]);
 
 	// Checkout is invalid if: no checkout ID in URL, or fetching is done but no checkout data
 	const isCheckoutInvalid = !hasCheckoutId || (!fetchingCheckout && !checkout && !isAuthenticating);

@@ -16,6 +16,10 @@ export const useCheckout = ({ pause = false } = {}) => {
 	const [{ data, fetching, stale }, refetch] = useCheckoutQuery({
 		variables: { id: id || "", languageCode: localeConfig.graphqlLanguageCode },
 		pause: shouldPause,
+		// Always revalidate against Saleor when the query (re)mounts: the cart can
+		// change while this page is not mounted (back navigation, second tab), and a
+		// cache-first read would keep showing the old lines until a full reload.
+		requestPolicy: "cache-and-network",
 	});
 
 	return useMemo(

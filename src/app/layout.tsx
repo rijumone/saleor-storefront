@@ -7,6 +7,7 @@ import { localeConfig } from "@/config/locale";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Toaster } from "@/ui/components/ui/toaster";
 import SessionRecorder from "@/ui/components/SessionRecorder";
+import { StaleBuildRecovery } from "@/ui/components/stale-build-recovery";
 
 /**
  * Root metadata for the entire site.
@@ -30,6 +31,7 @@ export default function RootLayout(props: { children: ReactNode }) {
 			</head>
 			<body className="min-h-dvh font-sans">
 				<SessionRecorder />
+				<StaleBuildRecovery />
 				{children}
 				<SpeedInsights />
 				<Toaster />
