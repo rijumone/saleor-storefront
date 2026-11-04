@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Mail } from "lucide-react";
 import { useSaleorAuthContext } from "@saleor/auth-sdk/react";
 import { Button } from "@/ui/components/ui/button";
@@ -16,6 +16,8 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export function LoginMode({ initialEmail = "" }: { initialEmail?: string }) {
 	const router = useRouter();
 	const params = useParams<{ channel: string }>();
+	const pathname = usePathname();
+	const searchParams = useSearchParams();
 	const { signIn } = useSaleorAuthContext();
 
 	const [email, setEmail] = useState(initialEmail);
@@ -59,7 +61,18 @@ export function LoginMode({ initialEmail = "" }: { initialEmail?: string }) {
 			}
 
 			if (result.data?.tokenCreate?.token) {
-				router.push(`/${params.channel}`);
+				// Keep the user on the protected page that rendered this form (for
+				// example an account-deletion link with its one-time token).
+				const next = searchParams.get("next");
+				const currentPath = `${pathname}${searchParams.toString() ? `?${searchParams}` : ""}`;
+				const destination =
+					next && next.startsWith(`/${params.channel}/`)
+						? next
+						: pathname.includes(`/${params.channel}/account`)
+							? currentPath
+							: `/${params.channel}`;
+
+				router.push(destination);
 				router.refresh();
 			}
 		} catch {

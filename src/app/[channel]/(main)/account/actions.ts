@@ -9,6 +9,7 @@ import {
 	AccountAddressDeleteDocument,
 	AccountSetDefaultAddressDocument,
 	AccountRequestDeletionDocument,
+	AccountDeleteDocument,
 	AddressValidationRulesDocument,
 	type AddressInput,
 	type CountryCode,
@@ -206,6 +207,37 @@ export async function setDefaultAddress(formData: FormData): Promise<ActionResul
 	}
 
 	revalidatePath("/account/addresses", "page");
+	return { success: true };
+}
+
+export async function deleteAccount(token: string): Promise<ActionResult> {
+	const trimmedToken = token.trim();
+
+	if (!trimmedToken) {
+		return { success: false, error: "This deletion link is invalid or has expired." };
+	}
+
+	const result = await executeAuthenticatedGraphQL(AccountDeleteDocument, {
+		variables: { token: trimmedToken },
+		cache: "no-cache",
+	});
+
+	if (!result.ok) {
+		console.error("[account] deleteAccount failed:", result.error);
+		return {
+			success: false,
+			error: "We couldn't delete your account. Please request a new deletion link.",
+		};
+	}
+
+	const errors = result.data.accountDelete?.errors;
+	if (errors?.length) {
+		return {
+			success: false,
+			error: errors[0]?.message ?? "This deletion link is invalid or has expired.",
+		};
+	}
+
 	return { success: true };
 }
 

@@ -17,7 +17,7 @@ export function DeleteAccountSection() {
 		setError("");
 		startTransition(async () => {
 			const formData = new FormData();
-			formData.set("redirectUrl", `${window.location.origin}/${params.channel}`);
+			formData.set("redirectUrl", `${window.location.origin}/${params.channel}/account/delete`);
 			formData.set("channel", params.channel);
 			const result = await requestAccountDeletion(formData);
 			if (!result.success) {

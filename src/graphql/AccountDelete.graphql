@@ -1,0 +1,9 @@
+mutation AccountDelete($token: String!) {
+	accountDelete(token: $token) {
+		errors {
+			field
+			message
+			code
+		}
+	}
+}
