@@ -32,7 +32,7 @@ export const SaleorCheckout: FC = () => {
 	const router = useRouter();
 	const searchParams = useSearchParams();
 	const { checkout, fetching: fetchingCheckout, hasCheckoutId, refetch } = useCheckout();
-	const { loading: isAuthenticating } = useUser();
+	const { loading: isAuthenticating, refetch: refetchUser } = useUser();
 
 	// Auto-attach logged-in user to checkout (runs once, persists across step changes)
 	useCustomerAttach();
@@ -58,6 +58,7 @@ export const SaleorCheckout: FC = () => {
 	useEffect(() => {
 		const refresh = () => {
 			void refetch();
+			void refetchUser();
 		};
 		const onPageShow = (event: PageTransitionEvent) => {
 			if (event.persisted) refresh();
@@ -73,7 +74,7 @@ export const SaleorCheckout: FC = () => {
 			window.removeEventListener("pageshow", onPageShow);
 			document.removeEventListener("visibilitychange", onVisibilityChange);
 		};
-	}, [refetch]);
+	}, [refetch, refetchUser]);
 
 	// Checkout is invalid if: no checkout ID in URL, or fetching is done but no checkout data
 	const isCheckoutInvalid = !hasCheckoutId || (!fetchingCheckout && !checkout && !isAuthenticating);

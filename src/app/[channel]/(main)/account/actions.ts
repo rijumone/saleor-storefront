@@ -61,10 +61,10 @@ export async function getAddressValidationRules(countryCode: string): Promise<Ad
 
 export async function updateProfile(formData: FormData): Promise<ActionResult> {
 	const firstName = getFormString(formData, "firstName");
-	const lastName = getFormString(formData, "lastName");
+	const lastName = getFormStringOptional(formData, "lastName");
 
 	const result = await executeAuthenticatedGraphQL(AccountUpdateDocument, {
-		variables: { input: { firstName, lastName } },
+		variables: { input: { firstName, lastName: lastName ?? "" } },
 		cache: "no-cache",
 	});
 

@@ -1,8 +1,9 @@
-import { Mail, Calendar } from "lucide-react";
+import { Mail, Calendar, Phone } from "lucide-react";
 import { EditNameForm } from "@/ui/components/account/edit-name-form";
 import { ChangePasswordForm } from "@/ui/components/account/change-password-form";
 import { DeleteAccountSection } from "@/ui/components/account/delete-account-section";
 import { getCurrentUser } from "../get-current-user";
+import { cn } from "@/lib/utils";
 
 export default async function AccountSettingsPage() {
 	const user = await getCurrentUser();
@@ -12,6 +13,11 @@ export default async function AccountSettingsPage() {
 		month: "long",
 		year: "numeric",
 	});
+
+	const defaultShipping = user.addresses.find((address) => address.id === user.defaultShippingAddress?.id);
+	const defaultBilling = user.addresses.find((address) => address.id === user.defaultBillingAddress?.id);
+	const contactPhone =
+		defaultShipping?.phone || defaultBilling?.phone || user.addresses.find((address) => address.phone)?.phone;
 
 	return (
 		<div className="space-y-8">
@@ -29,6 +35,18 @@ export default async function AccountSettingsPage() {
 								<Mail className="h-4 w-4 text-muted-foreground" />
 								<p className="font-medium">{user.email}</p>
 							</div>
+						</div>
+					</div>
+				</div>
+
+				<div className="p-4 sm:p-6">
+					<div>
+						<p className="text-sm text-muted-foreground">Contact number</p>
+						<div className="flex items-center gap-2">
+							<Phone className="h-4 w-4 text-muted-foreground" />
+							<p className={cn("font-medium", !contactPhone && "text-muted-foreground")}>
+								{contactPhone || "Not provided"}
+							</p>
 						</div>
 					</div>
 				</div>

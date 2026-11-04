@@ -4,8 +4,8 @@ import { useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { Mail, User } from "lucide-react";
-import { LinkWithChannel } from "@/ui/atoms/link-with-channel";
 import { Button } from "@/ui/components/ui/button";
+import { Checkbox } from "@/ui/components/ui/checkbox";
 import { Input } from "@/ui/components/ui/input";
 import { PasswordInput } from "@/ui/components/ui/password-input";
 import { Label } from "@/ui/components/ui/label";
@@ -19,6 +19,7 @@ export function SignUpForm() {
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
 	const [confirmPassword, setConfirmPassword] = useState("");
+	const [agreedToTerms, setAgreedToTerms] = useState(false);
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [error, setError] = useState("");
 	const [success, setSuccess] = useState(false);
@@ -28,6 +29,11 @@ export function SignUpForm() {
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
 		setError("");
+
+		if (!agreedToTerms) {
+			setError("Please agree to the Terms of Service to create an account.");
+			return;
+		}
 
 		// Validation
 		if (!email || !validateEmail(email)) {
@@ -164,7 +170,7 @@ export function SignUpForm() {
 						</div>
 						<div className="space-y-1.5">
 							<Label htmlFor="lastName" className="text-sm font-medium">
-								Last name
+								Last name <span className="font-normal text-muted-foreground">(optional)</span>
 							</Label>
 							<Input
 								id="lastName"
@@ -235,19 +241,46 @@ export function SignUpForm() {
 						)}
 					</div>
 
-					<Button type="submit" disabled={isSubmitting} className="h-12 w-full text-base font-semibold">
+					<div className="flex items-start gap-2">
+						<Checkbox
+							id="terms"
+							name="terms"
+							checked={agreedToTerms}
+							onCheckedChange={setAgreedToTerms}
+							aria-label="I agree to the Terms of Service"
+						/>
+						<div className="text-sm leading-snug text-muted-foreground">
+							<Label htmlFor="terms" className="cursor-pointer font-normal">
+								I agree to the
+							</Label>{" "}
+							<Link
+								href={`/${params.channel}/pages/terms`}
+								target="_blank"
+								rel="noopener noreferrer"
+								className="font-medium text-foreground underline underline-offset-2 hover:no-underline"
+							>
+								Terms of Service
+							</Link>
+						</div>
+					</div>
+
+					<Button
+						type="submit"
+						disabled={isSubmitting || !agreedToTerms}
+						className="h-12 w-full text-base font-semibold"
+					>
 						{isSubmitting ? "Creating account…" : "Create Account"}
 					</Button>
 
 					<p className="text-center text-xs text-muted-foreground">
-						By creating an account, you agree to our{" "}
-						<LinkWithChannel href="/pages/terms" className="underline hover:no-underline">
-							Terms of Service
-						</LinkWithChannel>{" "}
-						and{" "}
-						<LinkWithChannel href="/pages/privacy" className="underline hover:no-underline">
+						Read our{" "}
+						<Link
+							href={`/${params.channel}/pages/privacy`}
+							className="underline underline-offset-2 hover:no-underline"
+						>
 							Privacy Policy
-						</LinkWithChannel>
+						</Link>
+						.
 					</p>
 				</form>
 			</div>

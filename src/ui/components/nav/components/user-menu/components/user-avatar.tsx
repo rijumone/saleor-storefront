@@ -6,10 +6,9 @@ type Props = {
 };
 
 export const UserAvatar = ({ user }: Props) => {
-	const label =
-		user.firstName && user.lastName
-			? `${user.firstName.slice(0, 1)}${user.lastName.slice(0, 1)}`
-			: user.email.slice(0, 2);
+	const label = user.firstName
+		? `${user.firstName.slice(0, 1)}${user.lastName?.slice(0, 1) ?? ""}`
+		: user.email.slice(0, 2);
 
 	if (user.avatar) {
 		return (

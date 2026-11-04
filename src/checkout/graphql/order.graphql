@@ -8,7 +8,7 @@ fragment OrderLineFragment on OrderLine {
 	quantity
 	variant {
 		name
-		attributes(variantSelection: ALL) {
+		attributes(variantSelection: VARIANT_SELECTION) {
 			values {
 				name
 				dateTime

@@ -34,10 +34,10 @@ export function AccountNav() {
 		return accountPath.startsWith(href);
 	};
 
-	const initials =
-		user.firstName && user.lastName
-			? `${user.firstName[0]}${user.lastName[0]}`
-			: user.email.slice(0, 2).toUpperCase();
+	const displayName = [user.firstName, user.lastName].filter(Boolean).join(" ");
+	const initials = user.firstName
+		? `${user.firstName[0]}${user.lastName?.[0] ?? ""}`.toUpperCase()
+		: user.email.slice(0, 2).toUpperCase();
 
 	return (
 		<div className="flex flex-col">
@@ -63,9 +63,7 @@ export function AccountNav() {
 						{initials}
 					</div>
 				)}
-				<p className="font-semibold leading-tight">
-					{user.firstName} {user.lastName}
-				</p>
+				<p className="font-semibold leading-tight">{displayName}</p>
 				<p className="mt-0.5 text-sm text-muted-foreground">{user.email}</p>
 			</div>
 

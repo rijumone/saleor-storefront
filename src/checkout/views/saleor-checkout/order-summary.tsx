@@ -59,6 +59,12 @@ function extractCheckoutData(checkout: CheckoutFragment): OrderSummaryData {
 				?.map((attr) => attr.values[0]?.name)
 				.filter((name): name is string => Boolean(name)) || [];
 
+		// Products without selection attributes fall back to the variant name,
+		// matching the bag drawer.
+		if (attributes.length === 0 && line.variant?.name && line.variant.name !== line.variant.id) {
+			attributes.push(line.variant.name);
+		}
+
 		return {
 			id: line.id,
 			quantity: line.quantity,
@@ -88,6 +94,10 @@ function extractOrderData(order: OrderFragment): OrderSummaryData {
 			line.variant?.attributes
 				?.map((attr) => attr.values[0]?.name)
 				.filter((name): name is string => Boolean(name)) || [];
+
+		if (attributes.length === 0 && line.variantName) {
+			attributes.push(line.variantName);
+		}
 
 		return {
 			id: line.id,
@@ -146,16 +156,30 @@ export const OrderSummary: FC<OrderSummaryProps> = ({ checkout, order, editable 
 	};
 
 	const handleApplyPromo = async () => {
-		if (!checkout?.id || !promoCode) return;
+		const enteredCode = promoCode.trim();
+		if (!checkout?.id || !enteredCode) return;
 
-		const result = await addPromoCode({
-			checkoutId: checkout.id,
-			promoCode,
-			languageCode: localeConfig.graphqlLanguageCode,
-		});
+		const applyCode = (code: string) =>
+			addPromoCode({
+				checkoutId: checkout.id,
+				promoCode: code,
+				languageCode: localeConfig.graphqlLanguageCode,
+			});
 
-		if (result.data?.checkoutAddPromoCode?.errors?.length) {
-			setPromoError(result.data.checkoutAddPromoCode.errors[0].message || "Failed to apply code");
+		// Saleor's promo code lookup is case-sensitive. Try exactly what was
+		// entered first (so intentionally lower-case codes still work), then
+		// uppercase as a fallback. We do not force uppercase while typing: that
+		// fights paste/edit and makes mixed-case codes harder to enter.
+		let result = await applyCode(enteredCode);
+		const upperCode = enteredCode.toUpperCase();
+
+		if (result.data?.checkoutAddPromoCode?.errors?.length && upperCode !== enteredCode) {
+			result = await applyCode(upperCode);
+		}
+
+		const errors = result.data?.checkoutAddPromoCode?.errors;
+		if (errors?.length) {
+			setPromoError(errors[0].message || "Failed to apply code");
 		} else {
 			setPromoCode("");
 			setPromoError("");
@@ -341,6 +365,8 @@ export const OrderSummary: FC<OrderSummaryProps> = ({ checkout, order, editable 
 										<Tag className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
 										<Input
 											placeholder="Discount code"
+											autoCapitalize="characters"
+											spellCheck={false}
 											value={promoCode}
 											onChange={(e) => {
 												setPromoCode(e.target.value);

@@ -77,8 +77,8 @@ export function EditNameForm({ firstName, lastName }: Props) {
 					/>
 				</div>
 				<div className="space-y-1.5">
-					<Label htmlFor="lastName">Last name</Label>
-					<Input id="lastName" name="lastName" autoComplete="family-name" defaultValue={lastName} required />
+					<Label htmlFor="lastName">Last name (optional)</Label>
+					<Input id="lastName" name="lastName" autoComplete="family-name" defaultValue={lastName} />
 				</div>
 			</div>
 			<div className="flex gap-2">

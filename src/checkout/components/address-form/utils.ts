@@ -198,12 +198,13 @@ export const getOrderedAddressFields = (addressFields: AddressField[] = []): Add
 
 /**
  * Required for every address form, on top of the country rules from Saleor.
- * The phone number is required because the courier needs it for delivery.
+ * Last name is deliberately not required: not every customer uses one, and
+ * Saleor accepts an empty last name. The phone number is required because the
+ * courier needs it for delivery.
  */
 export const getRequiredAddressFields = (requiredFields: AddressField[] = []): AddressField[] => [
 	...requiredFields,
 	"firstName",
-	"lastName",
 	"phone",
 ];
 

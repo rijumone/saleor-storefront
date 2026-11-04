@@ -167,6 +167,27 @@ export const InformationStep: FC<InformationStepProps> = ({ checkout, onNext }) 
 		}
 	}, [user, selectedAddressId, showNewAddressForm, shippingAddress]);
 
+	// Saved addresses can be deleted from the account area while checkout is
+	// still open. If the selected one disappears, fall back to the customer's
+	// remaining default/first address instead of keeping a dead id.
+	useEffect(() => {
+		if (!user) return;
+
+		const addresses = user.addresses ?? [];
+		if (selectedAddressId && addresses.some((address) => address.id === selectedAddressId)) {
+			return;
+		}
+
+		const fallbackId =
+			addresses.find((address) => address.id === user.defaultShippingAddress?.id)?.id ??
+			addresses[0]?.id ??
+			null;
+
+		if (fallbackId !== selectedAddressId) {
+			setSelectedAddressId(fallbackId);
+		}
+	}, [user, selectedAddressId]);
+
 	// ----- Validation & Errors -----
 	const [errors, setErrors] = useState<Record<string, string>>({});
 	const [isSubmitting, setIsSubmitting] = useState(false);
