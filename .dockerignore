@@ -11,3 +11,9 @@ npm-debug.log
 README.md
 .next
 .git
+
+scripts
+e2e
+playwright.config.ts
+playwright-report
+test-results
