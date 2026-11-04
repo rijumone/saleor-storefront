@@ -17,20 +17,26 @@ export function AccountAddressCard({
 	children,
 }: Props) {
 	return (
-		<div className={cn("rounded-lg border p-4", className)}>
+		<div data-testid="account-address-card" className={cn("rounded-lg border p-4", className)}>
 			<div className="flex items-start justify-between gap-4">
 				<div className="min-w-0 space-y-1">
-					<div className="flex flex-wrap items-center gap-2">
-						<span className="font-semibold">
-							{address.firstName} {address.lastName}
-						</span>
+					<span className="block font-semibold">
+						{address.firstName} {address.lastName}
+					</span>
+					{/*
+					 * Keep the badges on their own row. Inline badges sat after names
+					 * of different lengths, so "Default shipping" and "Default
+					 * billing" never lined up across cards. The reserved height also
+					 * keeps the address lines aligned when only one card is default.
+					 */}
+					<div className="flex min-h-[1.25rem] flex-wrap items-center gap-2">
 						{isDefaultShipping && (
-							<span className="rounded bg-secondary px-1.5 py-0.5 text-xs font-medium text-muted-foreground">
+							<span className="inline-flex items-center rounded bg-secondary px-1.5 py-0.5 text-xs font-medium text-muted-foreground">
 								Default shipping
 							</span>
 						)}
 						{isDefaultBilling && (
-							<span className="rounded bg-secondary px-1.5 py-0.5 text-xs font-medium text-muted-foreground">
+							<span className="inline-flex items-center rounded bg-secondary px-1.5 py-0.5 text-xs font-medium text-muted-foreground">
 								Default billing
 							</span>
 						)}

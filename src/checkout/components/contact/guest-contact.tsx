@@ -1,10 +1,11 @@
 "use client";
 
-import { type FC, useState } from "react";
-import { Mail, Lock, Eye, EyeOff, Info } from "lucide-react";
+import { type FC } from "react";
+import { Mail, Info } from "lucide-react";
 import { Label } from "@/ui/components/ui/label";
 import { Checkbox } from "@/ui/components/ui/checkbox";
 import { Input } from "@/ui/components/ui/input";
+import { PasswordInput } from "@/ui/components/ui/password-input";
 import { cn } from "@/lib/utils";
 
 // Re-export for backward compatibility
@@ -54,8 +55,6 @@ export const GuestContact: FC<GuestContactProps> = ({
 	onPasswordChange,
 	passwordError,
 }) => {
-	const [showPassword, setShowPassword] = useState(false);
-
 	return (
 		<section className="space-y-4">
 			<div className="flex items-center justify-between">
@@ -110,26 +109,15 @@ export const GuestContact: FC<GuestContactProps> = ({
 			{createAccount && (
 				<div className="space-y-3">
 					<div className="space-y-1.5">
-						<div className="relative">
-							<Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-							<Input
-								id="password"
-								name="password"
-								type={showPassword ? "text" : "password"}
-								placeholder="Password (minimum 8 characters)"
-								value={password}
-								onChange={(e) => onPasswordChange(e.target.value)}
-								autoComplete="new-password"
-								className={cn("h-12 pl-10 pr-10", passwordError && "border-destructive")}
-							/>
-							<button
-								type="button"
-								onClick={() => setShowPassword(!showPassword)}
-								className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-							>
-								{showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-							</button>
-						</div>
+						<PasswordInput
+							id="password"
+							name="password"
+							placeholder="Password (minimum 8 characters)"
+							value={password}
+							onChange={(e) => onPasswordChange(e.target.value)}
+							autoComplete="new-password"
+							className={cn("h-12", passwordError && "border-destructive")}
+						/>
 						{passwordError && <p className="text-sm text-destructive">{passwordError}</p>}
 					</div>
 					{/* Account activation notice */}

@@ -42,8 +42,9 @@ ENV NEXT_PUBLIC_DEFAULT_CHANNEL=${NEXT_PUBLIC_DEFAULT_CHANNEL}
 ARG NEXT_PUBLIC_RRWEB_API_URL
 ENV NEXT_PUBLIC_RRWEB_API_URL=${NEXT_PUBLIC_RRWEB_API_URL}
 
-# Skip codegen during Docker build — generated files are already in the build context
-ENV SKIP_CODEGEN=1
+# Codegen runs during the build so clean clones/CI do not depend on ignored
+# generated files being present in the build context.
+# Set SKIP_CODEGEN=1 in the build environment to skip it intentionally.
 
 # Get PNPM version from package.json
 ENV PNPM_HOME="/pnpm"

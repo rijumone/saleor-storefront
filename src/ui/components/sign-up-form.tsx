@@ -3,10 +3,11 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { Mail, Lock, Eye, EyeOff, User } from "lucide-react";
+import { Mail, User } from "lucide-react";
 import { LinkWithChannel } from "@/ui/atoms/link-with-channel";
 import { Button } from "@/ui/components/ui/button";
 import { Input } from "@/ui/components/ui/input";
+import { PasswordInput } from "@/ui/components/ui/password-input";
 import { Label } from "@/ui/components/ui/label";
 import { cn } from "@/lib/utils";
 
@@ -18,7 +19,6 @@ export function SignUpForm() {
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
 	const [confirmPassword, setConfirmPassword] = useState("");
-	const [showPassword, setShowPassword] = useState(false);
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [error, setError] = useState("");
 	const [success, setSuccess] = useState(false);
@@ -204,28 +204,16 @@ export function SignUpForm() {
 						<Label htmlFor="password" className="text-sm font-medium">
 							Password
 						</Label>
-						<div className="relative">
-							<Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-							<Input
-								id="password"
-								type={showPassword ? "text" : "password"}
-								placeholder="Minimum 8 characters…"
-								autoComplete="new-password"
-								value={password}
-								onChange={(e) => setPassword(e.target.value)}
-								className="h-12 pl-10 pr-10"
-								required
-								minLength={8}
-							/>
-							<button
-								type="button"
-								onClick={() => setShowPassword(!showPassword)}
-								aria-label={showPassword ? "Hide password" : "Show password"}
-								className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-							>
-								{showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-							</button>
-						</div>
+						<PasswordInput
+							id="password"
+							placeholder="Minimum 8 characters…"
+							autoComplete="new-password"
+							value={password}
+							onChange={(e) => setPassword(e.target.value)}
+							className="h-12"
+							required
+							minLength={8}
+						/>
 					</div>
 
 					{/* Confirm Password */}
@@ -233,22 +221,15 @@ export function SignUpForm() {
 						<Label htmlFor="confirmPassword" className="text-sm font-medium">
 							Confirm password
 						</Label>
-						<div className="relative">
-							<Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-							<Input
-								id="confirmPassword"
-								type={showPassword ? "text" : "password"}
-								placeholder="Re-enter your password"
-								autoComplete="new-password"
-								value={confirmPassword}
-								onChange={(e) => setConfirmPassword(e.target.value)}
-								className={cn(
-									"h-12 pl-10",
-									confirmPassword && password !== confirmPassword && "border-destructive",
-								)}
-								required
-							/>
-						</div>
+						<PasswordInput
+							id="confirmPassword"
+							placeholder="Re-enter your password"
+							autoComplete="new-password"
+							value={confirmPassword}
+							onChange={(e) => setConfirmPassword(e.target.value)}
+							className={cn("h-12", confirmPassword && password !== confirmPassword && "border-destructive")}
+							required
+						/>
 						{confirmPassword && password !== confirmPassword && (
 							<p className="text-sm text-destructive">Passwords do not match</p>
 						)}

@@ -9,14 +9,55 @@ import {
 	AccountAddressDeleteDocument,
 	AccountSetDefaultAddressDocument,
 	AccountRequestDeletionDocument,
+	AddressValidationRulesDocument,
 	type AddressInput,
 	type CountryCode,
 	AddressTypeEnum,
 } from "@/gql/graphql";
-import { executeAuthenticatedGraphQL } from "@/lib/graphql";
+import { executeAuthenticatedGraphQL, executePublicGraphQL } from "@/lib/graphql";
+import type { AddressValidationRules } from "@/checkout/components/address-form/use-address-form-derivation";
 import { getFormString, getFormStringOptional } from "@/ui/components/account/form-utils";
 
-type ActionResult = { success: true } | { success: false; error: string };
+type ActionResult =
+	| { success: true }
+	| { success: false; error: string; fieldErrors?: Record<string, string> };
+
+function getAddressFieldErrors(
+	errors: ReadonlyArray<{ field?: string | null; message?: string | null }> | undefined,
+): Record<string, string> {
+	const fieldErrors: Record<string, string> = {};
+
+	for (const error of errors ?? []) {
+		if (error.field && error.message) {
+			fieldErrors[error.field] = error.message;
+		}
+	}
+
+	return fieldErrors;
+}
+
+function addressActionError(error: string, fieldErrors: Record<string, string>): ActionResult {
+	return Object.keys(fieldErrors).length ? { success: false, error, fieldErrors } : { success: false, error };
+}
+
+/**
+ * Country-specific address rules for the account address form. The checkout
+ * gets these through urql; the account area calls this public query instead of
+ * mounting the whole checkout provider tree.
+ */
+export async function getAddressValidationRules(countryCode: string): Promise<AddressValidationRules | null> {
+	const result = await executePublicGraphQL(AddressValidationRulesDocument, {
+		variables: { countryCode: countryCode as CountryCode },
+		cache: "no-cache",
+	});
+
+	if (!result.ok) {
+		console.error("[account] failed to load address validation rules:", result.error.message);
+		return null;
+	}
+
+	return result.data.addressValidationRules ?? null;
+}
 
 export async function updateProfile(formData: FormData): Promise<ActionResult> {
 	const firstName = getFormString(formData, "firstName");
@@ -79,12 +120,17 @@ export async function createAddress(formData: FormData): Promise<ActionResult> {
 	});
 
 	if (!result.ok) {
-		return { success: false, error: result.error.message };
+		console.error("[account] createAddress failed:", result.error);
+		return { success: false, error: "We couldn't save this address. Please try again." };
 	}
 
 	const errors = result.data.accountAddressCreate?.errors;
 	if (errors?.length) {
-		return { success: false, error: errors[0].message ?? "Failed to create address" };
+		const fieldErrors = getAddressFieldErrors(errors);
+		return addressActionError(
+			errors[0]?.message ?? "We couldn't save this address. Please check the fields and try again.",
+			fieldErrors,
+		);
 	}
 
 	revalidatePath("/account/addresses", "page");
@@ -101,12 +147,17 @@ export async function updateAddress(formData: FormData): Promise<ActionResult> {
 	});
 
 	if (!result.ok) {
-		return { success: false, error: result.error.message };
+		console.error("[account] updateAddress failed:", result.error);
+		return { success: false, error: "We couldn't save this address. Please try again." };
 	}
 
 	const errors = result.data.accountAddressUpdate?.errors;
 	if (errors?.length) {
-		return { success: false, error: errors[0].message ?? "Failed to update address" };
+		const fieldErrors = getAddressFieldErrors(errors);
+		return addressActionError(
+			errors[0]?.message ?? "We couldn't save this address. Please check the fields and try again.",
+			fieldErrors,
+		);
 	}
 
 	revalidatePath("/account/addresses", "page");
@@ -180,16 +231,22 @@ export async function requestAccountDeletion(formData: FormData): Promise<Action
 }
 
 function extractAddressInput(formData: FormData): AddressInput {
+	const value = (key: string) => {
+		const raw = getFormStringOptional(formData, key)?.trim();
+		return raw ? raw : undefined;
+	};
+
 	return {
-		firstName: getFormStringOptional(formData, "firstName"),
-		lastName: getFormStringOptional(formData, "lastName"),
-		companyName: getFormStringOptional(formData, "companyName"),
-		streetAddress1: getFormStringOptional(formData, "streetAddress1"),
-		streetAddress2: getFormStringOptional(formData, "streetAddress2"),
-		city: getFormStringOptional(formData, "city"),
-		postalCode: getFormStringOptional(formData, "postalCode"),
-		countryArea: getFormStringOptional(formData, "countryArea"),
-		country: getFormStringOptional(formData, "country") as CountryCode | undefined,
-		phone: getFormStringOptional(formData, "phone"),
+		firstName: value("firstName"),
+		lastName: value("lastName"),
+		companyName: value("companyName"),
+		streetAddress1: value("streetAddress1"),
+		streetAddress2: value("streetAddress2"),
+		city: value("city"),
+		cityArea: value("cityArea"),
+		postalCode: value("postalCode"),
+		countryArea: value("countryArea"),
+		country: value("country") as CountryCode | undefined,
+		phone: value("phone"),
 	};
 }

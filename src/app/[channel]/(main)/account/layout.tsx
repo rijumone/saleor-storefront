@@ -4,6 +4,7 @@ import { LoginForm } from "@/ui/components/login-form";
 import { AccountNav } from "@/ui/components/account/account-nav";
 import { AccountSkeleton } from "@/ui/components/account/account-skeleton";
 import { AccountProvider } from "@/ui/components/account/account-context";
+import { AuthProvider } from "@/lib/auth";
 import { seoTitle } from "@/lib/seo";
 import { getCurrentUser } from "./get-current-user";
 
@@ -19,6 +20,19 @@ export default function AccountLayout({ children }: { children: ReactNode }) {
 	);
 }
 
+/**
+ * Sign-in prompt for visitors without a server-side session. `LoginForm` is a
+ * client component that reads the Saleor auth context, so it needs the same
+ * provider the dedicated login route uses.
+ */
+function AccountSignIn() {
+	return (
+		<AuthProvider>
+			<LoginForm />
+		</AuthProvider>
+	);
+}
+
 async function AccountShell({ children }: { children: ReactNode }) {
 	let hasCookies = false;
 	try {
@@ -29,13 +43,13 @@ async function AccountShell({ children }: { children: ReactNode }) {
 	}
 
 	if (!hasCookies) {
-		return <LoginForm />;
+		return <AccountSignIn />;
 	}
 
 	const user = await getCurrentUser();
 
 	if (!user) {
-		return <LoginForm />;
+		return <AccountSignIn />;
 	}
 
 	return (

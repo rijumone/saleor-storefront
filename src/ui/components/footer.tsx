@@ -1,11 +1,10 @@
 import Link from "next/link";
 import { LinkWithChannel } from "../atoms/link-with-channel";
-import { ChannelSelect } from "./channel-select";
-import { ChannelsListDocument, MenuGetBySlugDocument } from "@/gql/graphql";
+import { MenuGetBySlugDocument } from "@/gql/graphql";
 import { executePublicGraphQL } from "@/lib/graphql";
 import { CACHE_PROFILES, applyCacheProfile } from "@/lib/cache-manifest";
-import { CopyrightText } from "./copyright-text";
 import { Logo } from "./shared/logo";
+import { CopyrightText } from "./copyright-text";
 
 // Default footer links when no CMS data is available
 const defaultFooterLinks = {
@@ -23,24 +22,6 @@ const defaultFooterLinks = {
 	],
 };
 
-/** Cached channels list - rarely changes */
-async function getChannels() {
-	"use cache";
-	applyCacheProfile(CACHE_PROFILES.channels);
-
-	if (!process.env.SALEOR_APP_TOKEN) {
-		return null;
-	}
-
-	const result = await executePublicGraphQL(ChannelsListDocument, {
-		headers: {
-			Authorization: `Bearer ${process.env.SALEOR_APP_TOKEN}`,
-		},
-	});
-
-	return result.ok ? result.data : null;
-}
-
 /** Cached footer menu */
 async function getFooterMenu(channel: string) {
 	"use cache";
@@ -55,7 +36,7 @@ async function getFooterMenu(channel: string) {
 }
 
 export async function Footer({ channel }: { channel: string }) {
-	const [footerLinks, channels] = await Promise.all([getFooterMenu(channel), getChannels()]);
+	const footerLinks = await getFooterMenu(channel);
 
 	const menuItems = footerLinks?.menu?.items || [];
 
@@ -181,15 +162,11 @@ export async function Footer({ channel }: { channel: string }) {
 					)}
 				</div>
 
-				{/* Channel selector */}
-				{channels?.channels && (
-					<div className="mt-8 text-neutral-400">
-						<label className="flex items-center gap-2 text-sm">
-							<span>Change currency:</span>
-							<ChannelSelect channels={channels.channels} />
-						</label>
-					</div>
-				)}
+				{/*
+				 * Channel/currency selector intentionally disabled. The storefront
+				 * currently serves only the default channel, so switching currency
+				 * would imply multi-channel support we do not provide yet.
+				 */}
 
 				{/* Bottom bar */}
 				<div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-neutral-800 pt-8 sm:flex-row">

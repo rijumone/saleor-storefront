@@ -1,12 +1,11 @@
 "use client";
 
 import { type FC, useState } from "react";
-import { Lock, Eye, EyeOff } from "lucide-react";
 import { useSaleorAuthContext } from "@saleor/auth-sdk/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/ui/components/ui/button";
 import { Label } from "@/ui/components/ui/label";
-import { Input } from "@/ui/components/ui/input";
+import { PasswordInput } from "@/ui/components/ui/password-input";
 import { getQueryParams, createQueryString } from "@/checkout/lib/utils/url";
 
 export interface ResetPasswordFormProps {
@@ -35,7 +34,6 @@ export const ResetPasswordForm: FC<ResetPasswordFormProps> = ({ onSuccess, onBac
 	const { resetPassword } = useSaleorAuthContext();
 	const [password, setPassword] = useState("");
 	const [confirmPassword, setConfirmPassword] = useState("");
-	const [showPassword, setShowPassword] = useState(false);
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [error, setError] = useState("");
 
@@ -102,46 +100,31 @@ export const ResetPasswordForm: FC<ResetPasswordFormProps> = ({ onSuccess, onBac
 				<Label htmlFor="new-password" className="text-sm font-medium">
 					New password
 				</Label>
-				<div className="relative">
-					<Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-					<Input
-						id="new-password"
-						type={showPassword ? "text" : "password"}
-						placeholder="Minimum 8 characters"
-						value={password}
-						onChange={(e) => setPassword(e.target.value)}
-						autoComplete="new-password"
-						className="h-12 pl-10 pr-10"
-						required
-						minLength={8}
-					/>
-					<button
-						type="button"
-						onClick={() => setShowPassword(!showPassword)}
-						className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-					>
-						{showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-					</button>
-				</div>
+				<PasswordInput
+					id="new-password"
+					placeholder="Minimum 8 characters"
+					value={password}
+					onChange={(e) => setPassword(e.target.value)}
+					autoComplete="new-password"
+					className="h-12"
+					required
+					minLength={8}
+				/>
 			</div>
 
 			<div className="space-y-1.5">
 				<Label htmlFor="confirm-password" className="text-sm font-medium">
 					Confirm password
 				</Label>
-				<div className="relative">
-					<Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-					<Input
-						id="confirm-password"
-						type={showPassword ? "text" : "password"}
-						placeholder="Re-enter your password"
-						value={confirmPassword}
-						onChange={(e) => setConfirmPassword(e.target.value)}
-						autoComplete="new-password"
-						className="h-12 pl-10"
-						required
-					/>
-				</div>
+				<PasswordInput
+					id="confirm-password"
+					placeholder="Re-enter your password"
+					value={confirmPassword}
+					onChange={(e) => setConfirmPassword(e.target.value)}
+					autoComplete="new-password"
+					className="h-12"
+					required
+				/>
 			</div>
 
 			<div className="flex items-center justify-between pt-2">

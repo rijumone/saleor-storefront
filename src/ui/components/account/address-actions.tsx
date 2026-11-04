@@ -2,7 +2,9 @@
 
 import { useState, useTransition } from "react";
 import { Trash2, Star } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/ui/components/ui/button";
+import { Tooltip } from "@/ui/components/ui/tooltip";
 import { deleteAddress, setDefaultAddress } from "@/app/[channel]/(main)/account/actions";
 
 type DeleteProps = {
@@ -17,7 +19,14 @@ export function DeleteAddressButton({ addressId }: DeleteProps) {
 		startTransition(async () => {
 			const formData = new FormData();
 			formData.set("id", addressId);
-			await deleteAddress(formData);
+			const result = await deleteAddress(formData);
+
+			if (result.success) {
+				toast.success("Address deleted", { position: "top-center" });
+			} else {
+				toast.error(result.error, { position: "top-center" });
+				setShowConfirm(false);
+			}
 		});
 	}
 
@@ -67,8 +76,10 @@ export function SetDefaultAddressButton({ addressId, type }: SetDefaultProps) {
 	const label = type === "SHIPPING" ? "Set as default shipping" : "Set as default billing";
 
 	return (
-		<Button variant="ghost" size="sm" onClick={handleSetDefault} disabled={isPending} aria-label={label}>
-			<Star className="h-3.5 w-3.5 text-muted-foreground" />
-		</Button>
+		<Tooltip label={label} align="end">
+			<Button variant="ghost" size="sm" onClick={handleSetDefault} disabled={isPending} aria-label={label}>
+				<Star className="h-3.5 w-3.5 text-muted-foreground" />
+			</Button>
+		</Tooltip>
 	);
 }

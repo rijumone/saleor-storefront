@@ -1,0 +1,14 @@
+query AddressValidationRules($countryCode: CountryCode!) {
+	addressValidationRules(countryCode: $countryCode) {
+		addressFormat
+		allowedFields
+		requiredFields
+		countryAreaType
+		postalCodeType
+		cityType
+		countryAreaChoices {
+			raw
+			verbose
+		}
+	}
+}
