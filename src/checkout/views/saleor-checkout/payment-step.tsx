@@ -296,6 +296,7 @@ export const PaymentStep: FC<PaymentStepProps> = ({
 							amount: checkout.totalPrice?.gross?.amount || 0,
 							currency: checkout.totalPrice?.gross?.currency || "INR",
 							receipt: checkout.id.substring(0, 40),
+							checkoutId: checkout.id,
 						}),
 					});
 
@@ -332,49 +333,34 @@ export const PaymentStep: FC<PaymentStepProps> = ({
 						description: "Order Checkout",
 						order_id: order.id,
 						handler: async function (_paymentResponse: any) {
-							// On success, complete Saleor checkout
+							// The Razorpay webhook records the payment on the Saleor checkout;
+							// this endpoint waits for that, then completes the checkout. The
+							// browser must never record a payment itself.
 							try {
 								setIsProcessing(true);
-								if (hasDummyGateway) {
-									const initResult = await transactionInitialize({
-										checkoutId: checkout.id,
-										action: "CHARGE" as any,
-										amount: checkout.totalPrice?.gross?.amount,
-										paymentGateway: {
-											id: dummyGatewayId,
-											data: {
-												event: { includePspReference: true, type: "CHARGE_SUCCESS" },
-											},
-										},
-									});
 
-									if (initResult.error || initResult.data?.transactionInitialize?.errors?.length) {
-										const errors = initResult.data?.transactionInitialize?.errors;
-										const errorMessage = errors?.length
-											? errors.map((e) => `${e.field}: ${e.message} (${e.code})`).join(", ")
-											: initResult.error?.message || "Unknown error";
-										console.error("Saleor transaction init failed:", initResult.error, errors);
-										throw new Error(`Saleor transaction init failed: ${errorMessage}`);
-									}
-								}
+								const finalizeResponse = await fetch("/api/checkout/finalize", {
+									method: "POST",
+									headers: { "Content-Type": "application/json" },
+									body: JSON.stringify({ checkoutId: checkout.id }),
+								});
 
-								const completeResult = await checkoutComplete({ checkoutId: checkout.id });
-								if (completeResult.error || completeResult.data?.checkoutComplete?.errors?.length) {
+								const finalizeResult = (await finalizeResponse.json().catch(() => ({}))) as {
+									orderId?: string;
+									error?: string;
+								};
+
+								if (!finalizeResponse.ok || !finalizeResult.orderId) {
 									throw new Error(
-										completeResult.data?.checkoutComplete?.errors?.[0]?.message ||
-											"Saleor checkout complete failed",
+										finalizeResult.error ||
+											"Payment received, but we could not confirm the order yet. Please retry in a moment.",
 									);
 								}
 
-								const saleorOrder = completeResult.data?.checkoutComplete?.order;
-								if (saleorOrder) {
-									const newQuery = createQueryString(searchParams, { orderId: saleorOrder.id });
-									router.replace(`?${newQuery}`, { scroll: false });
-								} else {
-									onComplete();
-								}
+								const newQuery = createQueryString(searchParams, { orderId: finalizeResult.orderId });
+								router.replace(`?${newQuery}`, { scroll: false });
 							} catch (err: any) {
-								setErrors({ payment: err.message || "Failed to complete order in Saleor" });
+								setErrors({ payment: err.message || "Failed to confirm the order in Saleor" });
 							} finally {
 								setIsProcessing(false);
 							}

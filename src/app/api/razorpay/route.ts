@@ -12,17 +12,31 @@ export async function POST(request: Request) {
 		}
 
 		const razorpay = new Razorpay({ key_id, key_secret });
-		const body: any = await request.json();
-		const { amount, currency = "INR", receipt } = body;
+		const body = (await request.json()) as {
+			amount?: number;
+			currency?: string;
+			receipt?: string;
+			checkoutId?: string;
+		};
+
+		const { amount, currency = "INR", receipt, checkoutId } = body;
 
 		if (!amount) {
 			return NextResponse.json({ error: "Amount is required" }, { status: 400 });
+		}
+
+		if (!checkoutId) {
+			return NextResponse.json({ error: "checkoutId is required" }, { status: 400 });
 		}
 
 		const options = {
 			amount: Math.round(amount * 100), // Razorpay expects amount in smallest currency unit (e.g., paise)
 			currency,
 			receipt,
+			// The webhook resolves the Saleor checkout from this note. Razorpay caps
+			// `receipt` at 40 characters, which is shorter than a Saleor checkout id,
+			// so the receipt cannot be used as the join key.
+			notes: { saleor_checkout_id: checkoutId },
 		};
 
 		const order = await razorpay.orders.create(options);
